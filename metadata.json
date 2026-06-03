@@ -1,0 +1,6 @@
+{
+  "name": "HASEX OS",
+  "description": "An advanced cognitive neural interface to analyze mental state data, identify workflow bottlenecks, and assign structured focus missions with real-time tracking.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

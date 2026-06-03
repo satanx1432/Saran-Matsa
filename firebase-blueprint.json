@@ -1,0 +1,88 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile document containing base accounts registration data.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique user credentials identifier in Firebase Authentication."
+        },
+        "email": {
+          "type": "string",
+          "description": "Registered credentials email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Optional profile screen nickname."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Optional associated profile visual photo link."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp indicating registration point."
+        }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A secure, real-time message dispatched in the persistent network chat room.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique id matching collection path assignment key."
+        },
+        "senderUid": {
+          "type": "string",
+          "description": "Unique auth UID of dispatching operator."
+        },
+        "senderEmail": {
+          "type": "string",
+          "description": "Auth registered email of message dispatcher."
+        },
+        "senderDisplayName": {
+          "type": "string",
+          "description": "Optional human display label of dispatcher."
+        },
+        "senderPhotoURL": {
+          "type": "string",
+          "description": "Optional visual asset representation link."
+        },
+        "text": {
+          "type": "string",
+          "description": "Decrypted contents containing standard human message data stream."
+        },
+        "fileURL": {
+          "type": "string",
+          "description": "Optional document/image attachment URL uploaded to Firebase Storage."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Optional attachment file baseline filename label."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-side synchronized timestamp vector."
+        }
+      },
+      "required": ["id", "senderUid", "senderEmail", "text", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "A secure isolated index containing registered user details."
+    },
+    "/chat_messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Persistent shared cyber-terminal channel containing peer conversational loops."
+    }
+  }
+}
