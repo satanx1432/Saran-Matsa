@@ -9,10 +9,12 @@ import CockpitDashboard from "./components/CockpitDashboard";
 import NvidiaAgentHub from "./components/NvidiaAgentHub";
 import FirebaseChat from "./components/FirebaseChat";
 import OperatorProfile from "./components/OperatorProfile";
+import LandingPortal from "./components/LandingPortal";
 import { AnalysisResult, CognitiveLog, CompletedMission, Mission } from "./types";
 import { Loader2, Zap, ArrowRight, X } from "lucide-react";
 
 export default function App() {
+  const [isEntered, setIsEntered] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("radar");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [rawText, setRawText] = useState<string>("");
@@ -241,6 +243,10 @@ export default function App() {
       default: return "";
     }
   };
+
+  if (!isEntered) {
+    return <LandingPortal onEnter={() => setIsEntered(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-black text-[#e2e2e2] flex flex-col font-sans relative antialiased select-none pb-28">

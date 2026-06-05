@@ -26,7 +26,7 @@ service cloud.firestore {
       return resource.data;
     }
 
-        // User profile validation rules
+    // User profile validation rules
     function isValidUserProfile(data) {
       return data.keys().hasAll(['uid', 'email', 'createdAt'])
         && data.keys().size() <= 5
@@ -57,6 +57,23 @@ service cloud.firestore {
         && data.createdAt == request.time;
     }
 
+    // Saved chat history validation rules
+    function isValidSavedChatHistory(data) {
+      return data.keys().hasAll(['id', 'userId', 'mode', 'title', 'messagesJson', 'timestamp'])
+        && data.keys().size() == 6
+        && data.id is string
+        && data.id.size() <= 128
+        && data.userId == request.auth.uid
+        && data.userId is string
+        && data.mode is string
+        && data.mode.size() <= 32
+        && data.title is string
+        && data.title.size() <= 1000
+        && data.messagesJson is string
+        && data.messagesJson.size() <= 128000
+        && data.timestamp == request.time;
+    }
+
     // User Profile matching block
     match /users/{userId} {
       allow read: if isSignedIn() && userId == request.auth.uid;
@@ -71,6 +88,14 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidId(messageId) && isValidChatMessage(incoming());
       allow update: if false;
       allow delete: if false;
+    }
+
+    // Chat Histories matching block
+    match /chat_histories/{historyId} {
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(historyId) && isValidSavedChatHistory(incoming());
+      allow update: if isSignedIn() && isValidId(historyId) && existing().userId == request.auth.uid && isValidSavedChatHistory(incoming()) && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
   }
 }

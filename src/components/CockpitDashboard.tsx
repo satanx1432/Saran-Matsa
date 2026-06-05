@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Zap, Clock, Terminal, CheckCircle2, FileText, ArrowRight, Activity, Search, ShieldAlert, Cpu, Sparkles, Loader2 } from "lucide-react";
+import { Zap, Clock, Terminal, CheckCircle2, FileText, ArrowRight, Activity, Search, ShieldAlert, Cpu, Sparkles, Loader2, Brain, Compass, HelpCircle } from "lucide-react";
 import { CompletedMission, CognitiveLog } from "../types";
 
 interface CockpitDashboardProps {
@@ -30,6 +30,11 @@ export default function CockpitDashboard({
   const totalSecondsCompleted = completedMissions.reduce((acc, m) => acc + m.time_spent_s, 0);
   const totalMinSpent = Math.round(totalSecondsCompleted / 60);
 
+  // Assistant selection states
+  const [assistantMode, setAssistantMode] = useState<"learn" | "create" | null>(() => {
+    return (localStorage.getItem("hasex_assistant_mode") as "learn" | "create") || null;
+  });
+
   // RAG Query states
   const [ragQuery, setRagQuery] = useState("");
   const [systemIndex, setSystemIndex] = useState("1");
@@ -40,6 +45,13 @@ export default function CockpitDashboard({
   // Synthetic states
   const [isSynthPending, setIsSynthPending] = useState(false);
   const [synthStatus, setSynthStatus] = useState<string | null>(null);
+
+  const handleSelectAssistant = (mode: "learn" | "create") => {
+    setAssistantMode(mode);
+    localStorage.setItem("hasex_assistant_mode", mode);
+    // Instant trigger interactive assistant load on click!
+    window.dispatchEvent(new CustomEvent("open-hasex-ai", { detail: { mode } }));
+  };
 
   // Run RAG Search
   const handleRagSearch = async (e: React.FormEvent) => {
@@ -111,27 +123,177 @@ export default function CockpitDashboard({
     }
   };
 
+  const currentFocusChallenge = logs.length > 0 
+    ? logs[0].bottleneckTitle 
+    : "No major focus distractions logged yet today.";
+
+  const latestInsightText = logs.length > 0 
+    ? logs[0].title 
+    : "Your mind is currently perfectly fresh. Ready to begin your first workflow!";
+
   return (
     <div className="w-full flex flex-col gap-8 text-left" id="cockpit-radar-dashboard">
-      {/* Top Welcome Title Grid */}
+      
+      {/* Top Header Block Redesign - Clarity First, Branding Second, Lore Third */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 bg-[#00f0ff] signal-glow"></div>
           <h1 className="font-sans text-3xl md:text-5xl font-bold text-[#e2e2e2] tracking-tight antialiased uppercase">
-            COGNITIVE_RADAR_HUB
+            Your Personal AI Operating System
           </h1>
         </div>
-        <p className="font-mono text-xs tracking-wider text-[#b9cacb]/80">
-          SYS.LOG // ACTIVE COGNITIVE INTELLIGENCE & METRIC OVERVIEW
+        <p className="font-sans text-sm tracking-normal text-[#b9cacb] font-medium">
+          Learn faster, stay organized, track progress, and build projects with AI assistance.
+          <span className="font-mono text-[10px] text-[#00f0ff] opacity-60 ml-2.5 select-none">(HASEX OS v0.1)</span>
         </p>
       </div>
 
+      {/* Onboarding Wizard Checklist: Choose Your Assistant */}
+      {!assistantMode ? (
+        <div className="glass-panel p-6 bg-[#0c0c0e]/95 border-2 border-[#00f0ff]/50 rounded-none text-left relative overflow-hidden animate-fade-in">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f0ff]/10 rounded-none blur-3xl pointer-events-none" />
+          
+          <div className="flex items-center gap-2 border-b border-[#3b494b]/30 pb-3 mb-4">
+            <Sparkles className="text-[#00f0ff] w-4 h-4 animate-spin-slow" />
+            <span className="font-mono text-[10px] tracking-widest text-[#00f0ff] font-extrabold uppercase">
+              CHOOSE YOUR ASSISTANT
+            </span>
+          </div>
+
+          <p className="text-sm text-[#e2e2e2] mb-5 font-sans leading-relaxed">
+            Welcome to HASEX. To begin optimizing your daily focus and operations, select the primary mode of AI assistance you require today:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Learn Block */}
+            <div 
+              onClick={() => handleSelectAssistant("learn")}
+              className="border-[1.5px] border-[#00f0ff]/30 hover:border-[#00f0ff] bg-black/40 hover:bg-[#00f0ff]/5 p-5 cursor-pointer transition-all duration-300 flex flex-col gap-2.5 rounded-none group"
+            >
+              <div className="flex justify-between items-center">
+                <span className="font-sans text-lg font-bold text-white group-hover:text-[#00f0ff]">
+                  📚 Learn Assistant
+                </span>
+                <span className="font-mono text-[8px] bg-[#00f0ff]/10 text-[#00f0ff] px-2 py-0.5 rounded-none font-bold">MODE: STUDY</span>
+              </div>
+              <p className="text-xs text-[#b9cacb]/85 leading-relaxed">
+                Understand difficult concepts, solve heavy equation problems, synthesize workspace data, and learn anything faster with dedicated educational guides.
+              </p>
+              <span className="text-[10px] font-mono text-[#00f0ff] group-hover:opacity-100 opacity-75 mt-2 transition-opacity flex items-center gap-1">
+                Activate Assistant <ArrowRight size={11} />
+              </span>
+            </div>
+
+            {/* Creator Block */}
+            <div 
+              onClick={() => handleSelectAssistant("create")}
+              className="border-[1.5px] border-[#c57cff]/30 hover:border-[#c57cff] bg-black/40 hover:bg-[#c57cff]/5 p-5 cursor-pointer transition-all duration-300 flex flex-col gap-2.5 rounded-none group"
+            >
+              <div className="flex justify-between items-center">
+                <span className="font-sans text-lg font-bold text-white group-hover:text-[#c57cff]">
+                  🧠 Creator Assistant
+                </span>
+                <span className="font-mono text-[8px] bg-[#c57cff]/10 text-[#c57cff] px-2 py-0.5 rounded-none font-bold">MODE: BUILD</span>
+              </div>
+              <p className="text-xs text-[#b9cacb]/85 leading-relaxed">
+                Build physical ideas/blueprints, write code scripts, design dynamic visual mockups, structure agendas, and ship projects with AI assistance.
+              </p>
+              <span className="text-[10px] font-mono text-[#c57cff] group-hover:opacity-100 opacity-75 mt-2 transition-opacity flex items-center gap-1">
+                Activate Assistant <ArrowRight size={11} />
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Welcome back dashboard overview answers the core questions clearly */
+        <div className="glass-panel p-6 bg-[#09090b]/90 border-[1px] border-[#00f0ff]/30 rounded-none text-left relative overflow-hidden transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f0ff]/5 rounded-none blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between border-b border-[#3b494b]/20 pb-3 mb-5">
+            <div>
+              <h2 className="font-sans text-xl md:text-2xl font-bold text-[#e2e2e2] tracking-tight uppercase">
+                Welcome back.
+              </h2>
+              <p className="font-sans text-xs text-[#b9cacb]/70 tracking-wide">
+                Here's what matters today.
+              </p>
+            </div>
+          </div>
+
+          {/* Today's Focus, Current Priorities, Upcoming Tasks, Recent Journal Insight */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Card 1: Focus */}
+            <div className="flex flex-col gap-1.5">
+              <span className="font-mono text-[9px] text-[#00f0ff] uppercase tracking-wider font-extrabold block">
+                [ FOCUS FOCUS ]
+              </span>
+              <h4 className="font-sans text-xs font-bold text-neutral-400 uppercase select-none">What should I focus on?</h4>
+              <p className="font-sans text-xs text-[#e2e2e2] leading-relaxed">
+                {assistantMode === "learn" 
+                  ? "Understand difficult concepts, study equations, and query code explanations." 
+                  : "Ship creative mockups, optimize program codes, and configure custom scripts."}
+              </p>
+            </div>
+
+            {/* Card 2: Tasks Due */}
+            <div className="flex flex-col gap-1.5">
+              <span className="font-mono text-[9px] text-[#00f0ff] uppercase tracking-wider font-extrabold block">
+                [ ASSIGNMENTS ]
+              </span>
+              <h4 className="font-sans text-xs font-bold text-neutral-400 uppercase select-none">Upcoming Tasks Due</h4>
+              <p className="font-sans text-xs text-[#e2e2e2] leading-relaxed">
+                {completedMissions.length === 0 
+                  ? "Zero goals recorded. Set up your study timer using the first session button below." 
+                  : `You have completed ${completedMissions.length} sessions recently. Ready for the next loop!`}
+              </p>
+            </div>
+
+            {/* Card 3: Recent Journal Insight */}
+            <div className="flex flex-col gap-1.5">
+              <span className="font-mono text-[9px] text-[#00f0ff] uppercase tracking-wider font-extrabold block">
+                [ CLARITY VECTORS ]
+              </span>
+              <h4 className="font-sans text-xs font-bold text-neutral-400 uppercase select-none font-sans">Recent Journal Insight</h4>
+              <p className="font-sans text-xs text-[#e2e2e2] leading-relaxed italic truncate">
+                &quot;{latestInsightText}&quot;
+              </p>
+            </div>
+
+            {/* Card 4: Action Suggestions */}
+            <div className="flex flex-col gap-2">
+              <span className="font-mono text-[9px] text-[#00f0ff] uppercase tracking-wider font-extrabold block">
+                [ GUIDANCE ]
+              </span>
+              <h4 className="font-sans text-xs font-bold text-neutral-400 uppercase select-none">Suggested next action</h4>
+              <div className="flex flex-col gap-1.5">
+                <button 
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent("open-hasex-ai", { detail: { mode: assistantMode } }));
+                  }}
+                  className="bg-[#00f0ff]/10 hover:bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/30 text-[9px] font-mono py-1 rounded-none uppercase font-bold text-center cursor-pointer transition-all active:scale-95"
+                >
+                  Talk to HASEX AI
+                </button>
+                <button 
+                  onClick={onNavigateToAnalyze}
+                  className="bg-[#e5e2e3] hover:bg-white text-black text-[9px] font-mono py-1 rounded-none uppercase font-bold text-center cursor-pointer transition-all active:scale-95"
+                >
+                  Start Your First Session
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Statistics Block */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        
+        {/* Progress Score (ACCUMULATED_SIGNALS) */}
         <div className="glass-panel p-6 rounded-none relative overflow-hidden bg-[#0a0a0b]/80 border-[#3b494b]/40">
-          <div className="absolute top-4 right-4 text-[#00dbe9]/20 font-mono text-[9px] uppercase font-bold select-none">NET_GAIN</div>
+          <div className="absolute top-4 right-4 text-[#00dbe9]/20 font-mono text-[9px] uppercase font-bold select-none">ACCUMULATED_SIGNALS</div>
           <span className="font-mono text-[10px] tracking-widest text-[#b9cacb]/60 block mb-2 font-bold uppercase">
-            ACCUMULATED_SIGNALS
+            Signal Score
           </span>
           <div className="flex items-center gap-2 text-[#00dbe9] text-glow">
             <Zap size={20} className="fill-current" />
@@ -140,10 +302,11 @@ export default function CockpitDashboard({
           </div>
         </div>
 
+        {/* Tasks Completed (MISSIONS_COMPLETED) */}
         <div className="glass-panel p-6 rounded-none relative overflow-hidden bg-[#0a0a0b]/80 border-[#3b494b]/40">
-          <div className="absolute top-4 right-4 text-[#00dbe9]/20 font-mono text-[9px] uppercase font-bold select-none">RESOLVED</div>
+          <div className="absolute top-4 right-4 text-[#00dbe9]/20 font-mono text-[9px] uppercase font-bold select-none">MISSIONS_COMPLETED</div>
           <span className="font-mono text-[10px] tracking-widest text-[#b9cacb]/60 block mb-2 font-bold uppercase">
-            MISSIONS_COMPLETED
+            Tasks Completed
           </span>
           <div className="flex items-center gap-2 text-[#e2e2e2]">
             <CheckCircle2 size={22} className="text-[#00f0ff] filter drop-shadow-[0_0_4px_rgba(0,219,233,0.5)]" />
@@ -152,10 +315,11 @@ export default function CockpitDashboard({
           </div>
         </div>
 
+        {/* Focus Time Today (FOCUS_TIME_ESTIMATE) */}
         <div className="glass-panel p-6 rounded-none relative overflow-hidden bg-[#0a0a0b]/80 border-[#3b494b]/40">
-          <div className="absolute top-4 right-4 text-[#00dbe9]/20 font-mono text-[9px] uppercase font-bold select-none">COMMITTED</div>
+          <div className="absolute top-4 right-4 text-[#00dbe9]/20 font-mono text-[9px] uppercase font-bold select-none">FOCUS_TIME_ESTIMATE</div>
           <span className="font-mono text-[10px] tracking-widest text-[#b9cacb]/60 block mb-2 font-bold uppercase">
-            FOCUS_TIME_ESTIMATE
+            Focus Time Today
           </span>
           <div className="flex items-center gap-2 text-[#e2e2e2]">
             <Clock size={20} className="text-[#ffb4ab]" />
@@ -167,56 +331,77 @@ export default function CockpitDashboard({
 
       {/* Main split sections */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left pane: Quick actions and signal log details */}
+        
+        {/* Left pane: Action Launchers & Focus Challenge */}
         <div className="lg:col-span-4 flex flex-col gap-6">
+          
+          {/* Main call-to-action dashboard focus launcher */}
           <div className="glass-panel p-6 rounded-none bg-[#0a0a0b]/85 border-[#00f0ff]/30 shadow-[0_0_15px_rgba(0,219,233,0.05)] flex flex-col gap-5 text-center items-center justify-center min-h-[224px] relative overflow-hidden">
             {/* Design accents */}
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00dbe9]/80 to-transparent" />
             <div className="absolute right-0 top-0 w-16 h-16 bg-[#00f0ff]/2 rounded-none blur-xl pointer-events-none" />
             
-            <div className="bg-[#00f0ff]/10 p-3 border-[0.5px] border-[#00f0ff]/25 rounded-none select-none">
-              <Activity size={32} className="text-[#00f0ff] animate-pulse" />
+            <div className="bg-[#00f0ff]/10 p-3 border-[0.5px] border-[#00f0ff]/25 rounded-none select-none animate-pulse">
+              <Activity size={32} className="text-[#00f0ff]" />
             </div>
             
             <div className="flex flex-col gap-1 text-center">
               <h3 className="font-sans text-base font-extrabold text-white tracking-wide uppercase">
-                Focus Dashboard
+                Work Session Launcher
               </h3>
-              <p className="font-sans text-xs text-[#b9cacb]/80 max-w-sm leading-relaxed">
-                Analyze your cognitive reflections to discover productivity insights and personalized goals.
+              <p className="font-sans text-xs text-[#b9cacb]/85 max-w-sm leading-relaxed">
+                Log distractions or clear system context switching traps, and generate optimized learning schedules.
               </p>
             </div>
 
             <div className="flex flex-col gap-2.5 w-full">
               <button
                 onClick={onNavigateToAnalyze}
-                className="w-full bg-[#00f0ff] hover:bg-[#7df4ff] text-black font-mono text-xs tracking-widest uppercase font-bold py-3.5 px-4 rounded-none transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(0,219,233,0.2)] hover:shadow-[0_0_20px_rgba(0,219,233,0.35)] active:scale-95 text-glow-subtle"
+                className="w-full bg-[#00f0ff] hover:bg-[#7df4ff] text-black font-mono text-xs tracking-widest uppercase font-bold py-3.5 px-4 rounded-none transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(0,219,233,0.2)] hover:shadow-[0_0_20px_rgba(0,219,233,0.35)] active:scale-95 text-glow-subtle animate-bounce"
               >
-                <span>START FOCUS ANALYSIS</span>
+                <span>START YOUR FIRST SESSION</span>
                 <ArrowRight size={13} className="stroke-[2.5px]" />
               </button>
 
               <button
-                onClick={onNavigateToAnalyze}
-                className="w-full bg-transparent hover:bg-white/5 text-white border-[0.5px] border-[#3b494b]/60 hover:border-white font-mono text-xs tracking-widest uppercase py-3 px-4 rounded-none transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("open-hasex-ai", { detail: { mode: assistantMode || "learn" } }));
+                }}
+                className="w-full bg-transparent hover:bg-white/5 text-[#00f0ff] border-[0.5px] border-[#00f0ff]/60 hover:border-[#00f0ff] font-mono text-xs tracking-widest uppercase py-3 px-4 rounded-none transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
-                <span>CHECK TODAY'S STATUS</span>
+                <span>TALK TO HASEX AI</span>
               </button>
             </div>
           </div>
+
+          {/* Attention Array Degradation / Focus Challenge card */}
+          <div className="glass-panel p-5 rounded-none bg-[#0a0a0b]/75 border-[#ffb4ab]/30 relative overflow-hidden">
+            <div className="absolute top-2 right-2 font-mono text-[7px] text-[#ffb4ab]/30 select-none">ATTENTION_ARRAY_DEGRADATION</div>
+            <span className="font-mono text-[9px] tracking-widest text-[#ffb4ab] font-bold block mb-1 uppercase">
+              Focus Challenge
+            </span>
+            <div className="flex items-center gap-2.5 border-b border-[#3b494b]/20 pb-2 mb-3">
+              <ShieldAlert className="text-[#ffb4ab] w-4 h-4 animate-pulse" />
+              <span className="font-sans text-sm font-semibold text-white">YOUR ACCUMULATED OBSTACLES</span>
+            </div>
+            <p className="font-sans text-xs text-[#b9cacb]/85 leading-relaxed italic">
+              {currentFocusChallenge}
+            </p>
+          </div>
         </div>
 
-        {/* Right pane: list of past scanned logs decryption */}
+        {/* Right pane: list of past scanned logs decryption (Recent Insights) */}
         <div className="lg:col-span-8 flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <FileText size={14} className="text-[#00dbe9]" />
               <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-[#e2e2e2]">
-                INSIGHTS
+                Recent Insights
               </h3>
             </div>
+            
             <p className="font-sans text-xs text-[#b9cacb]/70 leading-relaxed -mt-1.5 mb-1 bg-[#101012]/40 p-3 border-l-2 border-[#3b494b]/30">
-              Review saved mental clarity insights and chronic focus bottlenecks logged from your previous entries.
+              Review saved mental clarity insights and focus bottlenecks logged from your previous entries.
             </p>
 
             <div className="glass-panel bg-[#0a0a0b]/70 border-[#3b494b]/40 rounded-none overflow-hidden flex flex-col min-h-[220px]">
@@ -224,7 +409,9 @@ export default function CockpitDashboard({
                 <div className="flex-grow flex flex-col items-center justify-center p-8 text-center text-[#b9cacb]/50 select-none">
                   <FileText size={32} className="opacity-30 mb-2.5 text-[#00f0ff]" />
                   <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#e2e2e2]">No Insights Recorded Yet</span>
-                  <span className="font-sans text-[11.5px] max-w-sm mt-1.5 leading-relaxed text-[#b9cacb]/70">Your completed focus analyses and cognitive metrics will keep track of focus bottlenecks and productivity metrics here.</span>
+                  <span className="font-sans text-[11.5px] max-w-sm mt-1.5 leading-relaxed text-[#b9cacb]/70">
+                    Your completed focus work sessions and cognitive checks will show metrics and suggestions here.
+                  </span>
                 </div>
               ) : (
                 <div className="divide-y-[0.5px] divide-[#3b494b]/30">
@@ -239,7 +426,7 @@ export default function CockpitDashboard({
                           <span className="font-sans text-sm font-semibold text-[#e2e2e2] group-hover:text-[#00f0ff] transition-colors truncate">
                             {log.title}
                           </span>
-                          <span className="font-mono text-[9px] bg-[#00f0ff]/10 border-[0.5px] border-[#00f0ff]/20 px-1.5 py-0.5 text-[#00f0ff] uppercase rounded-none font-bold select-none whitespace-nowrap">
+                          <span className="font-mono text-[9px] bg-[#00f0ff]/10 border-[0.5px] border-[00f0ff]/20 px-1.5 py-0.5 text-[#00f0ff] uppercase rounded-none font-bold select-none whitespace-nowrap">
                             Clarity: {log.confidence}%
                           </span>
                         </div>

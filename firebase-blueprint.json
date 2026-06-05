@@ -73,6 +73,39 @@
         }
       },
       "required": ["id", "senderUid", "senderEmail", "text", "createdAt"]
+    },
+    "SavedChatHistory": {
+      "title": "SavedChatHistory",
+      "description": "Archived session history corresponding to specific mode interactions.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique document identifier."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User UID who owns this history."
+        },
+        "mode": {
+          "type": "string",
+          "description": "The active mode: learn or create."
+        },
+        "title": {
+          "type": "string",
+          "description": "Summary descriptive title of the conversation."
+        },
+        "messagesJson": {
+          "type": "string",
+          "description": "Serialized messages array representation."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the conversation history was saved."
+        }
+      },
+      "required": ["id", "userId", "mode", "title", "messagesJson", "timestamp"]
     }
   },
   "firestore": {
@@ -83,6 +116,10 @@
     "/chat_messages/{messageId}": {
       "schema": "ChatMessage",
       "description": "Persistent shared cyber-terminal channel containing peer conversational loops."
+    },
+    "/chat_histories/{historyId}": {
+      "schema": "SavedChatHistory",
+      "description": "Persistent saved mode-specific communication logs index metadata."
     }
   }
 }
