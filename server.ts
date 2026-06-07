@@ -1,8 +1,8 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { GoogleGenAI, Type } from "@google/genai";
 import { createServer as createViteServer } from "vite";
+import { GoogleGenAI } from "@google/genai";
 
 // Load environment variables
 dotenv.config();
@@ -10,34 +10,24 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+// Lazy GoogleGenAI client resolver
+let _aiClientInstance: any = null;
+function getGeminiClient() {
+  if (!_aiClientInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey && apiKey !== "MY_GEMINI_API_KEY" && apiKey !== "") {
+      _aiClientInstance = new GoogleGenAI({ apiKey });
+    }
+  }
+  return _aiClientInstance;
+}
+
 // Body parser
 app.use(express.json());
 
-// Initialize Google Gen AI client with recommendation patterns
-const geminiApiKey = process.env.GEMINI_API_KEY;
-let ai: GoogleGenAI | null = null;
-
-if (geminiApiKey && geminiApiKey !== "MY_GEMINI_API_KEY") {
-  try {
-    ai = new GoogleGenAI({
-      apiKey: geminiApiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        }
-      }
-    });
-    console.log("HASEX_OS // Gemini client successfully initialized.");
-  } catch (err) {
-    console.error("HASEX_OS // Failure to initialize Gemini client:", err);
-  }
-} else {
-  console.log("HASEX_OS // GEMINI_API_KEY was not provided/defaults. Using local decryptor fallback.");
-}
-
 // Fallback high-fidelity mocked analysis generator in case Gemini client is not initialized
 function getSimulatedAnalysis(rawText: string) {
-  const content = rawText ? rawText.trim() : "Default system telemetry diagnostic requested.";
+  const content = rawText ? rawText.trim() : "Default study activity started.";
   const wordCount = content.split(/\s+/).length;
   
   // Create deterministic metrics based on user content text code to keep it high fidelity
@@ -45,105 +35,172 @@ function getSimulatedAnalysis(rawText: string) {
   const confidence = 85 + (sumChars % 11); // 85% to 95%
   
   const titles = [
-    "Decrypting Semantic Vectors",
-    "Synaptic Signal Realignment",
-    "Cognitive Micro-Architecture Scan",
-    "Neural Node Latency Audit",
-    "Dynamic Focus Resource Map"
+    "Workspace Focus Analysis",
+    "Study Session Review",
+    "Task Concentration Check",
+    "Productivity Efficiency Review",
+    "Attention Balance Report"
   ];
   const title = titles[sumChars % titles.length];
 
+  // Robustly extract or generate the structured assessment properties
+  let goal = "Study or complete designated focus tasks";
+  let distraction = "Messaging / phone notifications";
+  let time_lost = "15 minutes";
+  let pattern_detected = "Unmuted alerts or social media apps broke focus blocks.";
+  let impact = "Study momentum decreased and progress slowed down.";
+  let recommended_actions = [
+    "Turn off notifications for messaging apps during study blocks.",
+    "Place the phone in another room to avoid unconscious checks.",
+    "Complete one study block before checking incoming items."
+  ];
+
+  // Try to extract goal/distraction/time from raw text entry format (e.g., compiled logs)
+  const goalMatch = content.match(/Objective\/Goal:\s*([^.]+)/i);
+  if (goalMatch && goalMatch[1].trim()) {
+    goal = goalMatch[1].trim();
+  }
+  const distMatch = content.match(/Distraction factor:\s*([^.]+)/i);
+  if (distMatch && distMatch[1].trim()) {
+    distraction = distMatch[1].trim();
+  }
+  const timeMatch = content.match(/Time lost:\s*([^.\/]+)/i);
+  if (timeMatch && timeMatch[1].trim()) {
+    time_lost = timeMatch[1].trim();
+  }
+
+  // Adjust remaining fields based on parsed distraction
+  const lowDist = distraction.toLowerCase();
+  if (lowDist.includes("messaging") || lowDist.includes("phone") || lowDist.includes("scroll") || lowDist.includes("social")) {
+    distraction = "Messaging & Notifications";
+    pattern_detected = "Phone conversations and notifications interrupted a focused work session.";
+    impact = "Study momentum was broken and concentration decreased.";
+    recommended_actions = [
+      "Enable focus mode on your phone during study sessions",
+      "Put messaging apps on silent",
+      "Complete one study block before checking messages"
+    ];
+  } else if (lowDist.includes("tired") || lowDist.includes("sleep") || lowDist.includes("fatigue")) {
+    distraction = "Mental Fatigue";
+    pattern_detected = "Inadequate resting intervals before executing heavy study tasks.";
+    impact = "Completing exercises required twice as long due to brain fog.";
+    recommended_actions = [
+      "Set a simple 20-minute timer for a power nap",
+      "Break study notes into visual summaries",
+      "Take a light walk outside to restore focus energy"
+    ];
+  } else if (lowDist.includes("difficult") || lowDist.includes("stuck") || lowDist.includes("hard")) {
+    distraction = "Task Avoidance";
+    pattern_detected = "Struggling with complex questions led to opening browser search pages.";
+    impact = "Progress came to a complete halt and triggered avoidance procrastinations.";
+    recommended_actions = [
+      "Write down the single next easy sub-step",
+      "Consult study guides or class notes directly",
+      "Set a 10-minute timer and pledge to work solely on that block"
+    ];
+  } else if (lowDist.includes("browse") || lowDist.includes("browsing") || lowDist.includes("youtube") || lowDist.includes("reddit") || lowDist.includes("web")) {
+    distraction = "Web Browsing";
+    pattern_detected = "Opened extra research browser tabs that branched off into general reading.";
+    impact = "Lost study time and focus was divided across unneeded information.";
+    recommended_actions = [
+      "Use a website blocker for non-essential web destinations",
+      "Keep only one or two reference tabs open",
+      "Write down quick questions to search during break periods"
+    ];
+  } else if (lowDist.includes("game") || lowDist.includes("gaming")) {
+    distraction = "Gaming Distraction";
+    pattern_detected = "Transitioned to video games during a quick study rest break.";
+    impact = "The break period expanded far past schedule, breaking task momentum.";
+    recommended_actions = [
+      "Move gaming console controllers to a different drawer during study locks",
+      "Use passive rests like simple stretching or drinking water during breaks",
+      "Keep game launches completely disabled until daily study goals are reached"
+    ];
+  }
+
   const bottlenecks = [
     {
-      title: "Execution Variance in Morning Window",
+      title: "Focus Lost Due To Distraction",
       points: [
-        "> High cognitive friction detected during state transitions.",
-        "> Boundary collapse between high-level planning and action nodes."
+        "> Message alert rings interrupted active concentration blocks.",
+        "> Mobile phone notifications repeatedly drew attention away."
       ],
-      insight: "Implement Structural Buffer Zones",
-      desc: "The data suggests your morning cognitive load spikes not from the tasks themselves, but from the unmediated transitions between high-abstraction planning and low-level execution. Establishing a rigid, 10-minute 'buffer protocol' between these states will normalize cognitive expenditure.",
-      target: "Morning Session (0800 - 1200)",
-      action: "Insert 10m mechanical reset",
-      m_title: "NEUTRALIZE DATA FRAGMENTATION",
-      m_code: "MSG-99X-ALFA",
-      m_sector: "CORE_MEMORY",
-      m_objective: "Realign orphaned data structures.",
-      phases: ["Initiate Journal Cycle J-89", "Align Neural Buffer Arrays", "Verify Synapse Signals", "Complete Structural Reset"]
+      insight: "Create Distraction Barriers",
+      desc: "Setting up solid offline periods protects study sessions. Silencing notifications or physically isolating communications ensures concentration flow holds steady.",
+      target: "Focus Session Block",
+      action: "Enable focus mode during work blocks",
+      m_title: "ESTABLISH WORK LABELS",
+      m_code: "MSG-101A-FOCUS",
+      m_sector: "STUDY_ENV",
+      m_objective: "Minimize notification disruptions.",
+      phases: ["Mute study phone", "Enable focus mode", "Open single task target", "Execute work session"]
     },
     {
-      title: "Asynchronous Context Leaks",
+      title: "Main Productivity Blocker",
       points: [
-        "> Multi-layered task loops remaining active in background registers.",
-        "> Elevated RAM (Recursive Attention Mass) depletion without output cache."
+        "> Starting large exercises without breaking them down into steps.",
+        "> High friction leading to switching to easy distraction channels."
       ],
-      insight: "Flush Attention Caches",
-      desc: "Your cognitive stream demonstrates unfinished tasks leaking attention. By introducing an active context-flushing cycle—brief, written checklists at the close of work nodes—you prevent working memory from holding persistent lockfiles.",
-      target: "Shift Change / Context Switch",
-      action: "Perform 5m Attention Registry Flush",
-      m_title: "OPTIMIZE SYNAPTIC SECTOR",
-      m_code: "MSG-45K-BETA",
-      m_sector: "ATTENTION_ARRAY",
-      m_objective: "Clear persistent loop memory locks.",
-      phases: ["Dump System Registers", "Identify Stray Sub-processes", "Commit Residual Context Out", "Acknowledge Memory Clean"]
+      insight: "Divide Goal Into Easy Steps",
+      desc: "Vague targets create mental hesitation. Writing down the very next 10-minute milestone makes beginning easy and maintains consistent progress.",
+      target: "Complex Assignment Blocks",
+      action: "List next tiny action next to block title",
+      m_title: "SIMPLIFY WORK STEPS",
+      m_code: "MSG-102B-STEPS",
+      m_sector: "PLANNING_ENV",
+      m_objective: "Divide tasks into simple blocks.",
+      phases: ["Review larger goal", "Write down first step", "Study first block", "Mark block as done"]
     },
     {
-      title: "Dopamine Cycle Saturation",
+      title: "Messaging Distraction",
       points: [
-        "> Low-intensity search patterns triggered before productive loops finish.",
-        "> Reward signaling misaligned with mission milestone completion."
+        "> Active chats running persistently alongside assignments.",
+        "> Browsing social media during transition intervals."
       ],
-      insight: "Enforce Threshold-Gated Inputs",
-      desc: "Frequent rapid network visual queries deplete prompt focus levels. Setting an active gate—where system notifications are batched at specific intervals rather than streaming real-time—stabilizes high-intensity production registers.",
-      target: "Production Window (1300 - 1700)",
-      action: "Configure batched input filters",
-      m_title: "CONSTRAIN INGRESS SIGNALS",
-      m_code: "MSG-12Z-GAMMA",
-      m_sector: "CHRONOS_GATE",
-      m_objective: "Establish gatekeeper thresholds.",
-      phases: ["Map External Signal Influx", "Construct Barrier Variables", "Apply Bandwidth Dampeners", "Establish Secure Uplink Gate"]
+      insight: "Limit Messaging Times",
+      desc: "Answering incoming messages instantly fragments your concentration. Selecting defined periods to review chats isolates interrupts and speeds up output.",
+      target: "Communication Blocks",
+      action: "Mute messaging channels",
+      m_title: "CONSOLIDATE CHATS",
+      m_code: "MSG-103C-BATCH",
+      m_sector: "COMMUNICATION_ENV",
+      m_objective: "Reduce immediate chat responses.",
+      phases: ["Silent messaging apps", "Set 25-minute timer", "Complete current study block", "Check messages afterwards"]
     }
   ];
   
   const bottleneck = bottlenecks[sumChars % bottlenecks.length];
 
-  // Analyze content for customized high-fidelity visual flowchart representing used vs wasted time
+  // Setup flowchart nodes mapped to simplified list
   const lowContent = content.toLowerCase();
   
   const flowchartNodes = [
-    { id: "start", label: "LOG INDEXING", type: "source", time_spent: "09:00 AM", description: "Operator initialized the daily cognitive telemetry scan." }
+    { id: "start", label: "Started Activity", type: "source", time_spent: "09:00 AM", description: "Standard homework session started." }
   ];
   const flowchartEdges = [];
 
-  let productiveLabel = "SYSTEM ARCHITECTURE RUN";
-  let productiveDesc = "Deep focus slot on core application modules and structural alignment.";
-  let productiveTime = "3.2 Hours";
+  let productiveLabel = "Focused Work Session";
+  let productiveDesc = "Deep focus on target assignments with minimal contextual disruption.";
+  let productiveTime = "1.5 Hours";
 
   if (lowContent.includes("code") || lowContent.includes("dev") || lowContent.includes("css") || lowContent.includes("react") || lowContent.includes("write")) {
-    productiveLabel = "ACTIVE DEVELOPMENT & REFACTOR";
-    productiveDesc = "Developing modules and writing functional TypeScript / Tailwind code segments.";
-    productiveTime = "4.5 Hours";
-  } else if (lowContent.includes("meeting") || lowContent.includes("call") || lowContent.includes("talk") || lowContent.includes("slack") || lowContent.includes("chat")) {
-    productiveLabel = "TEAM ALIGNMENT SYNC";
-    productiveDesc = "Necessary interactive sprint layout and stakeholder checkpoint integration.";
-    productiveTime = "1.5 Hours";
+    productiveLabel = "Focused Work Session";
+    productiveDesc = "Engaged in writing clean script structures and aligning UI interfaces.";
+    productiveTime = "2.0 Hours";
   }
 
-  let wasteLabel = "ATTENTION RETRIEVAL HOLE";
-  let wasteDesc = "Attention strayed into low-priority recursive exploration and news loops.";
-  let wasteTime = "45 Mins";
+  let wasteLabel = "Lost Focus";
+  let wasteDesc = "Concentration interrupted by checking external feeds or message alerts.";
+  let wasteTime = "15 Mins";
 
   if (lowContent.includes("phone") || lowContent.includes("scroll") || lowContent.includes("youtube") || lowContent.includes("reddit") || lowContent.includes("social") || lowContent.includes("feed")) {
-    wasteLabel = "ENDLESS STREAM SCROLL";
-    wasteDesc = "Cognitive lock hijacked by dopamine-retrieval scrolling mechanics on external network slots.";
-    wasteTime = "1.2 Hours";
-  } else if (lowContent.includes("coffee") || lowContent.includes("break") || lowContent.includes("eat") || lowContent.includes("food") || lowContent.includes("sleep")) {
-    wasteLabel = "PROLONGED POWER CYCLE";
-    wasteDesc = "Excessive pause duration or uncalibrated mental break slots leading to delayed spin-up.";
-    wasteTime = "50 Mins";
-  } else if (lowContent.includes("meeting") && (lowContent.includes("waste") || lowContent.includes("boring") || lowContent.includes("long"))) {
-    wasteLabel = "REDUNDANT MEETING RITUAL";
-    wasteDesc = "Inert time spent listening to non-relevant updates that should have been micro-digests.";
-    wasteTime = "1.0 Hour";
+    wasteLabel = "Messaging Distraction";
+    wasteDesc = "Attention shifted to scroll feeds and incoming cellular chat responses.";
+    wasteTime = "30 Mins";
+  } else if (lowContent.includes("coffee") || lowContent.includes("break") || lowContent.includes("eat") || lowContent.includes("food")) {
+    wasteLabel = "Time Lost";
+    wasteDesc = "General pause period grew far longer than standard rest cycles.";
+    wasteTime = "45 Mins";
   }
 
   flowchartNodes.push({
@@ -153,7 +210,7 @@ function getSimulatedAnalysis(rawText: string) {
     time_spent: productiveTime,
     description: productiveDesc
   });
-  flowchartEdges.push({ from: "start", to: "prod_1", label: "focus alignment" });
+  flowchartEdges.push({ from: "start", to: "prod_1", label: "focused effort" });
 
   flowchartNodes.push({
     id: "waste_1",
@@ -162,29 +219,35 @@ function getSimulatedAnalysis(rawText: string) {
     time_spent: wasteTime,
     description: wasteDesc
   });
-  flowchartEdges.push({ from: "prod_1", to: "waste_1", label: "high leak vectors" });
+  flowchartEdges.push({ from: "prod_1", to: "waste_1", label: "interruption" });
 
   flowchartNodes.push({
     id: "bottle_1",
     label: bottleneck.title.toUpperCase(),
     type: "bottleneck" as const,
     time_spent: "Peak Friction",
-    description: "Points of highest attention load and cognitive fatigue."
+    description: "Point where focus shifted away from the main goal task."
   });
-  flowchartEdges.push({ from: "waste_1", to: "bottle_1", label: "threshold breach" });
+  flowchartEdges.push({ from: "waste_1", to: "bottle_1", label: "focus leak" });
 
   flowchartNodes.push({
     id: "action_1",
     label: bottleneck.insight.toUpperCase(),
     type: "action" as const,
-    time_spent: "Immediate Action",
-    description: "Recommended operational reset protocol: " + bottleneck.action
+    time_spent: "Quiet Reset",
+    description: "Recommended clear-up rule: " + bottleneck.action
   });
-  flowchartEdges.push({ from: "bottle_1", to: "action_1", label: "recalibrate" });
+  flowchartEdges.push({ from: "bottle_1", to: "action_1", label: "realign" });
 
   return {
     title,
     confidence,
+    goal,
+    distraction,
+    time_lost,
+    pattern_detected,
+    impact,
+    recommended_actions,
     bottleneck_title: bottleneck.title,
     bottleneck_points: bottleneck.points,
     actionable_title: bottleneck.insight,
@@ -196,10 +259,10 @@ function getSimulatedAnalysis(rawText: string) {
       code: bottleneck.m_code,
       sector: bottleneck.m_sector,
       objective: bottleneck.m_objective,
-      difficulty: "CLASS IV",
-      reward: 450,
-      time_est_m: 12,
-      loop_status: "REPEAT",
+      difficulty: "CLASS II",
+      reward: 300,
+      time_est_m: 15,
+      loop_status: "SINGLE RUN",
       phases: bottleneck.phases
     },
     flowchart: {
@@ -209,34 +272,51 @@ function getSimulatedAnalysis(rawText: string) {
   };
 }
 
-// REST API for dynamic study advice selection using GPT-OSS 120B / Gemini
+// REST API for dynamic study advice selection using GPT-OSS 120B
 app.post("/api/suggest-time", async (req, res) => {
   const { taskName } = req.body;
   if (!taskName) {
     return res.status(400).json({ error: "Missing taskName key." });
   }
 
-  // If Gemini client is activated, query it for a high-fidelity dynamic response
-  if (ai) {
+  // Check if RAG_LLM_API_KEY (NVIDIA NIM API key) is available to execute the primary advice suggestion
+  const ragLlmKey = process.env.RAG_LLM_API_KEY || process.env.NVIDIA_API_KEY;
+  const isRagLlmActive = !!ragLlmKey && ragLlmKey !== "MY_RAG_LLM_API_KEY" && ragLlmKey !== "MY_NVIDIA_API_KEY" && ragLlmKey !== "";
+
+  if (isRagLlmActive) {
     try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: `Based on the task name: "${taskName}", suggest a perfect time today to work/study on this task. Write a single sentence. Make the wording extremely simple, friendly, easy-to-understand, so even a 4-year-old child will immediately understand it. Start the response with "GPT-OSS 120B suggests:"`,
+      const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${ragLlmKey}`
+        },
+        body: JSON.stringify({
+          model: "nvidia/llama-3.1-nemotron-70b-instruct",
+          messages: [
+            { role: "user", content: `Based on the task name: "${taskName}", suggest a perfect time today to work/study on this task. Write a single sentence. Make the wording extremely simple, friendly, easy-to-understand, so even a 4-year-old child will immediately understand it. Start the response with "HASEX suggests:"` }
+          ],
+          temperature: 0.5,
+          max_tokens: 150
+        })
       });
-      if (response && response.text) {
-        return res.json({ suggestion: response.text.trim() });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.choices && data.choices[0] && data.choices[0].message) {
+          return res.json({ suggestion: data.choices[0].message.content.trim() });
+        }
       }
     } catch (err) {
-      console.error("HASEX_OS // Dynamic suggestion AI fetch fail:", err);
+      console.error("HASEX_OS // Dynamic suggestion NVIDIA API fetch fail:", err);
     }
   }
 
   // Otherwise, use a highly customized, extremely simple child-friendly fallback response
   const simplePhrases = [
-    `GPT-OSS 120B suggests: Let's do "${taskName}" right now because your brain is super awake and ready to learn!`,
-    `GPT-OSS 120B suggests: A great time for "${taskName}" is in 5 minutes! Stand up and wiggle your arms first, then start!`,
-    `GPT-OSS 120B suggests: Start "${taskName}" immediately! Drink a small cup of water, sit down, and let's go!`,
-    `GPT-OSS 120B suggests: Doing "${taskName}" after taking 3 big deep breaths is a wonderful idea! Let's do it now!`
+    `Maverick suggests: Let's do "${taskName}" right now because your brain is super awake and ready to learn!`,
+    `Maverick suggests: A great time for "${taskName}" is in 5 minutes! Stand up and wiggle your arms first, then start!`,
+    `Maverick suggests: Start "${taskName}" immediately! Drink a small cup of water, sit down, and let's go!`,
+    `Maverick suggests: Doing "${taskName}" after taking 3 big deep breaths is a wonderful idea! Let's do it now!`
   ];
   const suggestion = simplePhrases[Math.floor(Math.random() * simplePhrases.length)];
   return res.json({ suggestion });
@@ -254,45 +334,65 @@ app.post("/api/analyze", async (req, res) => {
   const ragLlmKey = process.env.RAG_LLM_API_KEY || process.env.NVIDIA_API_KEY;
   const isRagLlmActive = !!ragLlmKey && ragLlmKey !== "MY_RAG_LLM_API_KEY" && ragLlmKey !== "MY_NVIDIA_API_KEY" && ragLlmKey !== "";
 
-  const systemPrompt = `You are "NEXUS Core Analyzer", the primary cognitive AI engine inside HASEX_OS, powered by the GPT-OSS 120B high-scale execution matrix.
-  Your task is to decrypt "cognitive streams" (mental logs, thoughts, notes, feelings, diaries, or work logs), determine where the user wasted their time vs. where they used it productively, and generate a structured JSON analysis result with a detailed flowchart Process Map. The text vectors are indexed via the BGE-M3 embedding model.
+  const systemPrompt = `You are "NEXUS Core Analyzer", the primary focus checker inside Maverick, designed to turn study/work logs into simple, actionable insights.
+  Your task is to review the user's focus log entries, determine what actually occurred to drift their focus, and generate a structured JSON analysis result with a flowchart.
 
-  Analyze the following user's cognitive neural data stream:
+  Analyze the following homework/study raw stream entries:
   "${rawText}"
 
-  Generate a JSON object containing the exact properties specified below. Every property is strictly required and must represent an insightful, highly contextual response tailored directly to the user's focus patterns, friction nodes, and daily tasks:
+  CRITICAL GUIDELINES:
+  - Do NOT generate fictional, military, cyberpunk, corporate, psychological, or sci-fi sounding diagnoses. For example, never use terms like: "Domain Shift Collateral Fatigue", "Cognitive Congestion", "Social Stream Drift", "Contextual Friction", "Attention Leak", "Cognitive Waste", or "Mental Calibration Failure".
+  - Cleanly replace all such visual labels with humble, plain language:
+    * "Domain Shift Collateral Fatigue" -> "Focus Lost Due To Distraction"
+    * "Cognitive Congestion" -> "Main Productivity Blocker"
+    * "Social Stream Drift" -> "Messaging Distraction"
+    * "Active Coding Run" -> "Focused Work Session"
+    * "Log Ingestion" -> "Started Activity"
+    * "Attention Leak" -> "Lost Focus"
+    * "Cognitive Waste" -> "Time Lost"
+  - Every insight must be understandable by a 14-year-old within 5 seconds.
+  - Prioritize clarity, usefulness, and behavior change over dramatic terminology.
+  - Focus strictly on real-world behavior patterns.
 
-  1. "title": A brief, 3-5 word headline (e.g. "Decrypting Semantic Vectors", "Synaptic Frequency Realignment", "Attention Array Degradation", "Asynchronous Loop Congestion").
-  2. "confidence": A deterministic percentage integer matching the quality/clarity of analysis (e.g. 88 to 98).
-  3. "bottleneck_title": A concise description of the core bottleneck identified (e.g. "Domain Shift Collateral Fatigue", "Intermittent Buffer Leaks", "Task-Queue Fragmentation").
-  4. "bottleneck_points": An array with exactly 2 monospaced point strings, starting with "> " (e.g. ["> High contextual friction observed during coding-to-planning transitions.", "> Boundary collapse between high-abstraction design and implementation registers."]).
-  5. "actionable_title": A title for the core focus strategy / tactical reset recommended.
-  6. "actionable_desc": A detailed paragraph explaining what the data indicates and why this structural protocol or focus zone will normalize energy levels and stabilize focus. Keep it serious, highly technical, and deeply architectural (no clichés, stay in HASEX_OS persona).
-  7. "target": Target timezone, activity, or window (e.g. "Morning Session (0800 - 1200)", "Immediate Context Switch Phase").
-  8. "action_required": Concrete task to implement (e.g. "Insert 10m mechanical buffer zone", "Flush active context cache via 5m checklist").
-  9. "mission": An object outlining the tactical focus target when converted to a mission:
-     - "title": A dramatic, highly active cyberpunk mission title matching the goal (e.g., "NEUTRALIZE DATA FRAGMENTATION", "SYNAPSE BOUNDARY SHIELD", "ATTENTION BUFFER RESTORATION"). All caps.
-     - "code": A random mission string formatted like "MSG-{random_number}X-{ALFA/BETA/GAMMA/DELTA}".
-     - "sector": A logical node sector name in all caps (e.g. "CORE_MEMORY", "CHRONOS_GATE", "ATTENTION_ARRAY", "COGNITIVE_RESERVES").
-     - "objective": The technical focus goal of the mission (e.g., "Realign orphaned data structures.", "Construct impenetrable workflow boundaries.").
-     - "difficulty": "CLASS IV" or similar technical class.
-     - "reward": A numeric signal token reward (e.g. 450, 600, 750).
-     - "time_est_m": A realistic time in minutes estimate (typically 10 to 30 minutes).
-     - "loop_status": "REPEAT" or "SINGLE RUN" or "continuous".
-     - "phases": An array of exactly 4 sequentially complete steps/phases to execute in the timer loop (e.g., ["Initiate Journal Cycle J-89", "Align Neural Buffer Arrays", "Verify Synapse Signals", "Complete Structural Reset"]).
-  10. "flowchart": An object representing a visual process flow of where the user wasted their time and where they used it productively. It must have these keys:
-     - "nodes": An array of objects, each containing:
-          - "id": A short unique identifier string (e.g., "start", "focused_coding", "distraction_phone", "bottleneck_overload", "resolution_protocol").
-          - "label": A precise uppercase text label of the state (e.g., "LOG INGESTION", "ACTIVE CODING RUN", "SOCIAL STREAM DRIFT", "COGNITIVE CONGESTION", "ACTION BUFFER DEPLOY").
-          - "type": MUST be one of: "source" (use for start/ingestion), "productive" (for useful work/time used), "distraction" (for wasted time/distractions), "bottleneck" (for the peak point of friction/waste), "action" (for the recommended corrective protocol).
-          - "time_spent": Duration spent in that state (e.g., "45 minutes", "2.5 hours", "10 minutes").
-          - "description": A brief explanation of the state or behavior.
-     - "edges": An array of connections between node ids, each containing:
-          - "from": The "id" of the source node.
-          - "to": The "id" of the target node.
-          - "label": A text connector showing transition flow (e.g., "focus target", "attention split", "leak node", "recalibrate").
+  Generate a JSON object containing EXACTLY the properties specified below. Every property is required and must represent a simple, plain-language assessment:
 
-  IMPORTANT: Strictly return RAW JSON that satisfies this schema. Do not enclosing it in markdown blocks. Output exactly the raw JSON only, starting with "{" and ending with "}".`;
+  1. "title": A brief, 3-5 word plain description (e.g. "Focus Review", "Study Session Wrap", "Homework Focus Balance").
+  2. "confidence": An integer percentage matching quality (e.g. 88 to 98).
+  3. "goal": What the user was trying to accomplish (e.g. "Study physics homework", "Write essay", "Read reference notes").
+  4. "distraction": The actual distraction or interruption that occurred (e.g. "Messaging notifications", "Web browsing", "Tiredness").
+  5. "time_lost": Estimated minutes lost (e.g. "15 minutes", "30 minutes").
+  6. "pattern_detected": A simple explanation of what repeatedly caused the interruption (e.g. "Phone conversations interrupted a focused study session.").
+  7. "impact": How the distraction affected progress (e.g. "Study momentum was broken and concentration decreased.").
+  8. "recommended_actions": An array of exactly 3 simple actions the user can take next time (e.g. ["Enable focus mode during study sessions", "Put messaging apps on mute", "Complete one study block before checking messages"]).
+  9. "bottleneck_title": A brief title describing the blocker (must be simple, e.g., "Main Productivity Blocker", "Focus Lost Due To Distraction", or "Messaging Distraction").
+  10. "bottleneck_points": An array with exactly 2 bullet strings (e.g. ["> Alert rings broke focus multiple times.", "> Checked notifications instead of finishing the section."]).
+  11. "actionable_title": Simple title of recommended focus action (e.g. "Disable Alerts").
+  12. "actionable_desc": Simple paragraph explaining how this action helps.
+  13. "target": Target situation (e.g. "Focused study sessions").
+  14. "action_required": Short required task (e.g. "Enable silent mode on mobile").
+  15. "mission": An object outlining the focus target set in a friendly checklist mode:
+      - "title": A simple active title (e.g., "CREATE WORK BOUNDARIES", "SIMPLIFY STEPS"). All caps.
+      - "code": A random identifier string formatted like "MSG-{random_number}X-{A/B/C}".
+      - "sector": A logical area (e.g., "STUDY_ENV", "PLANNING_ENV").
+      - "objective": The main objective (e.g. "Keep notifications silenced during homework periods.").
+      - "difficulty": "CLASS II" or "CLASS I".
+      - "reward": 300.
+      - "time_est_m": 15.
+      - "loop_status": "SINGLE RUN".
+      - "phases": An array of exactly 4 sequentially complete steps/phases to execute in the timer loop (e.g., ["Mute study phone", "Enable focus mode", "Execute study block", "Take short break"]).
+  16. "flowchart": An object representing a visual process flow of where the user worked vs. got distracted. It must have these keys:
+      - "nodes": An array of objects, each containing:
+           - "id": A short unique identifier string (e.g., "start", "focused_work", "distraction_node", "blocker_node", "action_node").
+           - "label": A precise plain-language uppercase text label conforming strictly to: "STARTED ACTIVITY", "FOCUSED WORK SESSION", "MESSAGING DISTRACTION", "MAIN PRODUCTIVITY BLOCKER", "LOST FOCUS", "TIME LOST", or "FOCUS LOST DUE TO DISTRACTION".
+           - "type": MUST be one of: "source" (started activity), "productive" (focused work session), "distraction" (distracted state/lost focus), "bottleneck" (blocker), "action" (resolution).
+           - "time_spent": Duration spent in that state (e.g., "15 minutes", "1.5 hours", "10 minutes").
+           - "description": A brief explanation of the state.
+      - "edges": An array of connections between node ids, each containing:
+           - "from": The "id" of the source node.
+           - "to": The "id" of the target node.
+           - "label": A text connector showing transition flow (e.g., "focused work", "distraction hit", "realign").
+
+  IMPORTANT: Strictly return RAW JSON that satisfies this schema. Do not enclose it in markdown blocks. Output exactly the raw JSON only, starting with "{" and ending with "}".`;
 
   if (isRagLlmActive) {
     console.log("HASEX_OS // RAG_LLM_API_KEY detected. Directing data mode analysis pipeline to Flash (Primary)...");
@@ -358,107 +458,12 @@ app.post("/api/analyze", async (req, res) => {
           embeddingModel: "BGE-M3"
         });
       } catch (parseErr) {
-        console.warn("HASEX_OS // NVIDIA response JSON extraction failed, falling back to Gemini/Simulation", parseErr);
+        console.warn("HASEX_OS // NVIDIA response JSON extraction failed, falling back to Local Data Decrypter", parseErr);
       }
     }
   }
 
-  // Fallback 1: Gemini client pipeline
-  if (ai) {
-    try {
-      console.log("HASEX_OS // Dispatching cognitive vector analysis with Flash / DeepSeek Pro and BGE-M3 configuration...");
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: `${systemPrompt}\n\nUser text stream: "${rawText}"`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              confidence: { type: Type.INTEGER },
-              bottleneck_title: { type: Type.STRING },
-              bottleneck_points: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              },
-              actionable_title: { type: Type.STRING },
-              actionable_desc: { type: Type.STRING },
-              target: { type: Type.STRING },
-              action_required: { type: Type.STRING },
-              mission: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  code: { type: Type.STRING },
-                  sector: { type: Type.STRING },
-                  objective: { type: Type.STRING },
-                  difficulty: { type: Type.STRING },
-                  reward: { type: Type.INTEGER },
-                  time_est_m: { type: Type.INTEGER },
-                  loop_status: { type: Type.STRING },
-                  phases: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING }
-                  }
-                },
-                required: ["title", "code", "sector", "objective", "difficulty", "reward", "time_est_m", "loop_status", "phases"]
-              },
-              flowchart: {
-                type: Type.OBJECT,
-                properties: {
-                  nodes: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        id: { type: Type.STRING },
-                        label: { type: Type.STRING },
-                        type: { type: Type.STRING },
-                        time_spent: { type: Type.STRING },
-                        description: { type: Type.STRING }
-                      },
-                      required: ["id", "label", "type"]
-                    }
-                  },
-                  edges: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        from: { type: Type.STRING },
-                        to: { type: Type.STRING },
-                        label: { type: Type.STRING }
-                      },
-                      required: ["from", "to"]
-                    }
-                  }
-                },
-                required: ["nodes", "edges"]
-              }
-            },
-            required: ["title", "confidence", "bottleneck_title", "bottleneck_points", "actionable_title", "actionable_desc", "target", "action_required", "mission", "flowchart"]
-          }
-        }
-      });
-
-      const textResponse = response.text?.trim() || "";
-      console.log("HASEX_OS // Raw response from Gemini retrieved:", textResponse.substring(0, 500) + "...");
-      
-      const parsedData = JSON.parse(textResponse);
-      return res.json({
-        ...parsedData,
-        usingFallback: false,
-        sourceEngine: "GPT-OSS 120B",
-        embeddingModel: "BGE-M3"
-      });
-    } catch (error: any) {
-      console.error("HASEX_OS // Error executing Gemini analysis fallback:", error);
-    }
-  }
-
-  // Fallback 2: Graceful automatic local analysis backup delivery
+  // Fallback: Graceful automatic local analysis backup delivery
   console.log("HASEX_OS // Utilizing simulated GPT-OSS 120B and BGE-M3 data decrypter fallback.");
   const fallbackResponse = getSimulatedAnalysis(rawText);
   return res.json({
@@ -466,6 +471,360 @@ app.post("/api/analyze", async (req, res) => {
     usingFallback: true,
     sourceEngine: "GPT-OSS 120B",
     embeddingModel: "BGE-M3"
+  });
+});
+
+// SINGLE-COMMAND ADAPTIVE MAVERICK ENGINE API Route (HASEX_OS core upgrade)
+app.post("/api/hasex-engine", async (req, res) => {
+  const { userInput, currentTraits, messages } = req.body;
+
+  if (!userInput || String(userInput).trim().length === 0) {
+    return res.status(400).json({ error: "Input command cannot be blank." });
+  }
+
+  const traits = currentTraits || {
+    action: 0.5,
+    persistence: 0.5,
+    discipline: 0.5,
+    awareness: 0.5,
+    courage: 0.5,
+    learning: 0.5
+  };
+
+  // Check if NVIDIA_API_KEY, RAG_LLM_API_KEY, or GEMINI_API_KEY is active
+  const activeNvidiaKey = process.env.NVIDIA_API_KEY || process.env.RAG_LLM_API_KEY;
+  const isNvidiaActive = !!activeNvidiaKey && 
+                         activeNvidiaKey !== "MY_NVIDIA_API_KEY" && 
+                         activeNvidiaKey !== "MY_RAG_LLM_API_KEY" && 
+                         activeNvidiaKey !== "";
+  const isGeminiActive = !!getGeminiClient();
+  const isLlmActive = isNvidiaActive || isGeminiActive;
+
+  // 10-Question Diagnostic Diagnostic System Sequence
+  const diagnosticQuestions = [
+    {
+      text: "When receiving a complex career task or project description, how do you usually begin?",
+      options: [
+        { text: "I open my sketch/source file immediately to draft ideas within 5 minutes", trait: "action", weight: 0.05 },
+        { text: "I conduct exhaustive background research first to fully clarify definitions", trait: "learning", weight: 0.05 },
+        { text: "I design a precise schedule step-by-step with defined focus intervals", trait: "discipline", weight: 0.05 },
+        { text: "I sit with the parameters first to assess my personal interest and energy levels", trait: "awareness", weight: 0.05 }
+      ]
+    },
+    {
+      text: "When encountering a major bottleneck or compiler error that disrupts your plan:",
+      options: [
+        { text: "I systematically isolate and draft diagnostic tests to find the break", trait: "learning", weight: 0.05 },
+        { text: "I repeatedly edit and compile variations with persistent iterations", trait: "persistence", weight: 0.05 },
+        { text: "I log the emotional tension in a scratchpad to regain clear focus", trait: "awareness", weight: 0.05 },
+        { text: "I search external community channels and implement a risky alternative quickly", trait: "courage", weight: 0.05 }
+      ]
+    },
+    {
+      text: "How do you direct your cognitive energy during a dedicated 4-hour slot?",
+      options: [
+        { text: "I follow rigid increments (like Pomodoro) to lock in continuity", trait: "discipline", weight: 0.05 },
+        { text: "I transition immediately as my curiosity shifts, keeping up velocity", trait: "action", weight: 0.05 },
+        { text: "I tackle whichever requirement is causing the most intense stress or urgency", trait: "courage", weight: 0.05 },
+        { text: "I lock down a single core objective and persevere until completion", trait: "persistence", weight: 0.05 }
+      ]
+    },
+    {
+      text: "When you notice that attention has strayed to messaging or social media sites:",
+      options: [
+        { text: "I trace the specific thought pattern or trigger that initiated the escape", trait: "awareness", weight: 0.05 },
+        { text: "I deploy an instant environmental barrier (e.g., site blocker, do-not-disturb)", trait: "discipline", weight: 0.05 },
+        { text: "I immediately terminate those windows and trigger a fresh micro-task", trait: "action", weight: 0.05 },
+        { text: "I accept the temporary diversion as essential rest and recalibrate", trait: "courage", weight: 0.05 }
+      ]
+    },
+    {
+      text: "When choosing a project topic or career path where success is highly uncertain status:",
+      options: [
+        { text: "I commit immediately to the highest-stakes scenario to test my adaptability", trait: "courage", weight: 0.05 },
+        { text: "I choose a structured standard format that guarantees solid outcomes first", trait: "discipline", weight: 0.05 },
+        { text: "I pick the concept containing the most foreign, advanced academic theories", trait: "learning", weight: 0.05 },
+        { text: "I evaluate how my unique talents align with the target core constraints", trait: "awareness", weight: 0.05 }
+      ]
+    },
+    {
+      text: "If a direct critic highlights multiple design flaws or bugs in your work:",
+      options: [
+        { text: "I study each feedback element to rebuild my foundational understanding", trait: "learning", weight: 0.05 },
+        { text: "I patch the critical issues instantly to demonstrate active response", trait: "action", weight: 0.05 },
+        { text: "I double down on my core thesis, finding ways to make my vision succeed", trait: "persistence", weight: 0.05 },
+        { text: "I compare their claims against objective peer norms before changing", trait: "discipline", weight: 0.05 }
+      ]
+    },
+    {
+      text: "When staring at multiple pending career tasks, how do you handle selection?",
+      options: [
+        { text: "I initiate the smallest, easiest physical task to generate momentum", trait: "action", weight: 0.05 },
+        { text: "I address the most foreign or intimidating concept head-on", trait: "courage", weight: 0.05 },
+        { text: "I select the activity that provides the largest conceptual learning curve", trait: "learning", weight: 0.05 },
+        { text: "I schedule tasks strictly inside my master calendar and execute in order", trait: "discipline", weight: 0.05 }
+      ]
+    },
+    {
+      text: "When long-term momentum slows and initial novelty is completely gone:",
+      options: [
+        { text: "I review initial commitment milestones and power through of duty", trait: "persistence", weight: 0.05 },
+        { text: "I adjust milestones into tiny, highly structured daily outputs", trait: "discipline", weight: 0.05 },
+        { text: "I step back to introspect on whether my goals still match my values", trait: "awareness", weight: 0.05 },
+        { text: "I pivot to fresh experimental tools or techniques to revive interest", trait: "action", weight: 0.05 }
+      ]
+    },
+    {
+      text: "When presenting your prototype before it meets your absolute polish standards:",
+      options: [
+        { text: "I expose it early to users to gather direct feedback loops", trait: "courage", weight: 0.05 },
+        { text: "I refine details offline until standard parameters are met", trait: "discipline", weight: 0.05 },
+        { text: "I deliver a clear concept lesson first to preface the actual results", trait: "learning", weight: 0.05 },
+        { text: "I consult trusted peers in a private focus group first", trait: "awareness", weight: 0.05 }
+      ]
+    },
+    {
+      text: "How do you define progress at the close of an intense learning cycle?",
+      options: [
+        { text: "By whether my mental models have shifted toward deeper clarity", trait: "learning", weight: 0.05 },
+        { text: "By the raw volume of compiled codes, slides, or documents produced", trait: "action", weight: 0.05 },
+        { text: "By how successfully I logged focus hours and avoided distractions", trait: "discipline", weight: 0.05 },
+        { text: "By my level of calm and clarity during stressful focus stages", trait: "awareness", weight: 0.05 }
+      ]
+    }
+  ];
+
+  // Count past assistant replies that offered diagnostic questions to keep the index synced
+  const history = messages || [];
+  const userMsgsCount = history.filter((m: any) => m.role === "user").length;
+  const questionIndex = userMsgsCount; // Question index based on completed turns
+
+  // If we are in the diagnostic phase, serve the sequential question
+  if (questionIndex < diagnosticQuestions.length) {
+    const q = diagnosticQuestions[questionIndex];
+    return res.json({
+      noiseCleaned: userInput.replace(/[^\w\s]/g, "").substring(0, 30),
+      intentDetected: "Diagnostic Assessment Integration",
+      entities: ["diagnostic", "profile", `turn-${questionIndex}`],
+      outputType: "diagnostic_question",
+      responseText: `${q.text}`,
+      options: q.options,
+      steps: [],
+      actionItem: "",
+      actionEstimate: "",
+      invisibleToolUsed: null,
+      traitUpdates: {}, // Updated dynamically when user selects option
+      usingFallback: true
+    });
+  }
+
+  // --- MULTI-MODEL LLM BACKEND WITH FALLBACK INTEGRATION (LLAMA CASCADE) ---
+  if (isLlmActive) {
+    const systemPromptMsg = `You are Maverick, the core intelligence engine of a behavioral learning and career guidance system.
+Your job is to provide highly precise, direct, and constructive answers/explanations to the user immediately. Do NOT issue distraction warnings, procrastination alerts, or warnings about focus loss. Give the requested outputs, code solutions, explanations, or answers directly.
+Your job is to:
+1. Understand user intent and classify their request dynamically into either:
+   - "CREATOR MODE": user wants to build something, solve problems, code, research, design, brainstorm. (Behavior: break problems into steps, provide execution-focused outputs, prioritize action, give direct answers and solutions).
+   - "LEARN MODE": user wants to understand a topic, study, explore concepts, explanations. (Behavior: simplify explanations, teach step-by-step, no sub-options or confusing layouts, give the exact concepts and facts directly).
+
+2. Guide users with direct answers and actionable steps.
+3. Update the 6 traits based on user actions: action, persistence, discipline, awareness, courage, learning.
+4. Do NOT ask annoying distraction/reflection questions. Focus entirely on helping the user solve their task/question directly.
+5. Output style must be exceptionally clear, mobile-first, minimal fluff, with the requested solution provided straight to the operator.
+
+You MUST respond in strict target JSON format containing:
+{
+  "noiseCleaned": "brief sanitization of input",
+  "intentDetected": "brief summary of intent",
+  "outputType": "clarified_action" | "clarifying_questions" | "structured_breakdown" | "micro_reflection" | "learn_concept",
+  "responseText": "Your direct, elegant 1-2 line main text or reflective question",
+  "steps": ["step 1", "step 2"],
+  "actionItem": "immediate task description",
+  "actionEstimate": "15m block / +250 SIG",
+  "invisibleToolUsed": "task_structuring" | "alarm_timer" | "table_viz" | "flowchart_logic" | null,
+  "traitUpdates": { "action": 0.0, "persistence": 0.0, "discipline": 0.0, "awareness": 0.0, "courage": 0.0, "learning": 0.0 }
+}`;
+
+    const formattedMsgs = [
+      { role: "system", content: systemPromptMsg },
+      ...history.map((m: any) => ({ role: m.role, content: m.content }))
+    ];
+
+    // Priority 1: Google GenAI Client
+    const geminiClient = getGeminiClient();
+    if (geminiClient) {
+      try {
+        console.log(`MAVERICK_ENGINE // Invoking Gemini API...`);
+        const historyText = formattedMsgs.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n\n") + "\n\nProvide the next ASSISTANT response in strict JSON format:";
+
+        const response = await geminiClient.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: historyText,
+          config: {
+            responseMimeType: 'application/json',
+            systemInstruction: systemPromptMsg,
+            temperature: 0.2
+          }
+        });
+
+        const cleanText = response.text?.trim() || "";
+        const parsed = JSON.parse(cleanText.replace(/```json|```/g, ""));
+        console.log(`MAVERICK_ENGINE // Gemini AI generation succeeded.`);
+        return res.json({
+          ...parsed,
+          sourceModel: "gemini-2.5-flash",
+          usingFallback: false
+        });
+      } catch (geminiError: any) {
+        console.warn(`MAVERICK_ENGINE // Gemini failure: ${geminiError.message}. Cascading...`);
+      }
+    }
+
+    // Priority 2: NVIDIA NIM API
+    if (isNvidiaActive) {
+      const apiModels = [
+        "meta/llama-3.2-1b-instruct",
+        "meta/llama-3.1-8b-instruct",
+        "meta/llama-3.1-70b-instruct",
+        "meta/llama-3.3-70b-instruct",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+      ];
+
+      for (const model of apiModels) {
+        try {
+          console.log(`MAVERICK_ENGINE // Attempting model: ${model}...`);
+          const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${activeNvidiaKey}`
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: formattedMsgs,
+              temperature: 0.2,
+              max_tokens: 1024,
+              response_format: { type: "json_object" }
+            })
+          });
+
+          if (response.ok) {
+            const resJson = await response.json();
+            const cleanText = resJson.choices?.[0]?.message?.content?.trim() || "";
+            const parsed = JSON.parse(cleanText.replace(/```json|```/g, ""));
+            console.log(`MAVERICK_ENGINE // Model [${model}] succeeded.`);
+            return res.json({
+              ...parsed,
+              sourceModel: model,
+              usingFallback: false
+            });
+          } else {
+            console.warn(`MAVERICK_ENGINE // Model [${model}] status code ${response.status}`);
+          }
+        } catch (err) {
+          console.warn(`MAVERICK_ENGINE // Model [${model}] fetch error. Cascading to next model.`);
+        }
+      }
+    }
+  }
+
+  // --- LOCAL HASEX / MAVERICK HYBRID REASONING EMULATOR FALLBACK ---
+  console.log("MAVERICK_ENGINE // Running local high-fidelity behavioral emulation...");
+  const lower = userInput.toLowerCase();
+  
+  let outputType: "clarified_action" | "clarifying_questions" | "structured_breakdown" | "micro_reflection" | "learn_concept" = "clarified_action";
+  let responseText = "Focus checkpoint registered. Keep physical phone away and maintain continuity.";
+  let steps: string[] = [];
+  let actionItem = "";
+  let actionEstimate = "";
+  let invisibleToolUsed: "task_structuring" | "alarm_timer" | "table_viz" | "flowchart_logic" | null = "task_structuring";
+  
+  let traitUpdates = {
+    action: 0.0,
+    persistence: 0.0,
+    discipline: 0.0,
+    awareness: 0.0,
+    courage: 0.0,
+    learning: 0.0
+  };
+
+  // Classify user inputs based on specified behavior rules
+  const lastMsgLow = lower;
+  const isExecutionBarrier = lastMsgLow.includes("stuck") || lastMsgLow.includes("fail") || lastMsgLow.includes("stop") || lastMsgLow.includes("delay") || lastMsgLow.includes("tired") || lastMsgLow.includes("lazy") || lastMsgLow.includes("procrastinat");
+  const isStudyLearning = lastMsgLow.includes("explain") || lastMsgLow.includes("understand") || lastMsgLow.includes("learn") || lastMsgLow.includes("concept") || lastMsgLow.includes("study") || lastMsgLow.includes("tutorial");
+  const isCreatorTask = lastMsgLow.includes("code") || lastMsgLow.includes("build") || lastMsgLow.includes("design") || lastMsgLow.includes("plan") || lastMsgLow.includes("write") || lastMsgLow.includes("create") || lastMsgLow.includes("brainstorm");
+
+  if (isExecutionBarrier) {
+    outputType = "structured_breakdown";
+    responseText = "Immediate action vector calculated to resume flow without delay. Here is the direct execution roadmap:";
+    steps = [
+      "Deconstruct the current obstacle into its absolute simplest component",
+      "Draft a single minimal solution or helper focusing exclusively on this sub-part",
+      "Run your compiler or test tool immediately to confirm current state progress"
+    ];
+    invisibleToolUsed = "task_structuring";
+    actionItem = "Execute micro action / Resolve bottleneck";
+    actionEstimate = "10m block / +200 SIG";
+    traitUpdates.action = 0.03;
+    traitUpdates.persistence = 0.02;
+  } else if (isCreatorTask) {
+    outputType = "structured_breakdown"; // Creator mode
+    responseText = "Creator focus vector initialized. Break down the target task sequence immediately:";
+    steps = [
+      "Isolate the single smallest file module or function to build first",
+      "Verify compiler error feedback instantly before drafting extensions",
+      "Lock down a 15-minute execution block, avoiding secondary adjustments"
+    ];
+    invisibleToolUsed = "task_structuring";
+    actionItem = "Creator module assembly / Code target";
+    actionEstimate = "15m block / +250 SIG";
+    traitUpdates.action = 0.02;
+    traitUpdates.discipline = 0.01;
+  } else if (isStudyLearning) {
+    outputType = "learn_concept"; // Learn mode
+    responseText = "Learn mode initialized: Concept isolated simplified to core basics.\n\n" +
+                   "1. Break the idea down into its most basic real-world analogy.\n" +
+                   "2. Frame the core rule of the topic on a simple note page.\n" +
+                   "3. Avoid over-complicating. State the single primary rule and proceed.";
+    invisibleToolUsed = "table_viz";
+    traitUpdates.learning = 0.02;
+    traitUpdates.awareness = 0.01;
+  } else {
+    // Standard adaptive conversation micro response
+    outputType = "clarified_action";
+    responseText = "Signal received. Specify your target concept or immediate workflow step so we can map execution loops.";
+    invisibleToolUsed = "alarm_timer";
+    actionItem = "Immediate concept isolate";
+    actionEstimate = "10m block / +100 SIG";
+    traitUpdates.discipline = 0.01;
+  }
+
+  // Generate high-fidelity mockup flowchart
+  const flowchart = {
+    nodes: [
+      { id: "start", label: "USER SIGNAL RECORDED", type: "source", time_spent: "0m", description: "Payload registered in behavioral buffer" },
+      { id: "focused", label: "ACTIVE MAVERICK PROCESSING", type: "productive", time_spent: "5m", description: "State vector updated silently" },
+      { id: "blocker", label: isExecutionBarrier ? "DELAY BARRIER IDENTIFIED" : "COGNITIVE TASK ASSIGNED", type: isExecutionBarrier ? "distraction" : "action", time_spent: "10m", description: "Remediation target focus" }
+    ],
+    edges: [
+      { from: "start", to: "focused", label: "uplink" },
+      { from: "focused", to: "blocker", label: "converge" }
+    ]
+  };
+
+  return res.json({
+    noiseCleaned: userInput.replace(/(um|uh|placeholder|actually|kinda|really|stuff|things)/gi, "").trim(),
+    intentDetected: isExecutionBarrier ? "Remediate execution friction" : "Map learning vector",
+    entities: [isExecutionBarrier ? "friction" : "progress"],
+    outputType,
+    responseText,
+    steps,
+    actionItem,
+    actionEstimate,
+    invisibleToolUsed,
+    traitUpdates,
+    flowchart,
+    usingFallback: true
   });
 });
 
@@ -477,8 +836,26 @@ app.post("/api/nvidia-agent", async (req, res) => {
     return res.status(400).json({ error: "Invalid messages conversation stream payload." });
   }
 
-  // Retrieve operative active mode (default to brainstorm)
-  const selectedMode = mode || "brainstorm";
+  // Dynamically analyze the user prompt to classify the best mode
+  const lastUserMsg = messages[messages.length - 1]?.content || "";
+  const queryLower = lastUserMsg.toLowerCase();
+
+  let inferredMode = "learn";
+  const isCodeQuery = /code|programming|bug|write|js|ts|python|css|html|react|svg|generate logo|build|form|create|asset|function|develop|script|compiler|error|syntax/i.test(queryLower);
+  const isJournalQuery = /journal|reflect|feeling|mood|thought|diary|review|experience|log/i.test(queryLower);
+  const isBrainstormQuery = /plan|brainstorm|strategy|idea|concept|schedule|sequence|design|project|roadmap/i.test(queryLower);
+
+  if (isCodeQuery) {
+    inferredMode = "create";
+  } else if (isJournalQuery) {
+    inferredMode = "journal";
+  } else if (isBrainstormQuery) {
+    inferredMode = "brainstorm";
+  } else {
+    inferredMode = "learn";
+  }
+
+  const selectedMode = inferredMode;
   const hasImageAttached = !!hasImage;
   
   let activeModelName = "Basic Chat";
@@ -500,21 +877,21 @@ app.post("/api/nvidia-agent", async (req, res) => {
     activeModelName = "Basic Chat";
   }
 
-  // Handle single unified API key preference - prioritizing NVIDIA_API_KEY
-  const activeNvidiaKey = rag_llm_key || process.env.NVIDIA_API_KEY || process.env.RAG_LLM_API_KEY || rag_vector_db_key || process.env.RAG_VECTOR_DB_API_KEY || rag_embedding_key || process.env.RAG_EMBEDDING_API_KEY;
-
-  const isLlmActive = !!activeNvidiaKey && 
-                      activeNvidiaKey !== "MY_NVIDIA_API_KEY" && 
-                      activeNvidiaKey !== "MY_RAG_LLM_API_KEY" && 
-                      activeNvidiaKey !== "MY_RAG_VECTOR_DB_API_KEY" && 
-                      activeNvidiaKey !== "MY_RAG_EMBEDDING_API_KEY";
+  // Handle single unified API key preference - prioritizing NVIDIA_API_KEY / GEMINI_API_KEY from backend env configs
+  const activeNvidiaKey = process.env.NVIDIA_API_KEY || process.env.RAG_LLM_API_KEY;
+  const isNvidiaActive = !!activeNvidiaKey && 
+                         activeNvidiaKey !== "MY_NVIDIA_API_KEY" && 
+                         activeNvidiaKey !== "MY_RAG_LLM_API_KEY" && 
+                         activeNvidiaKey !== "";
+  const isGeminiActive = !!getGeminiClient();
+  const isLlmActive = isNvidiaActive || isGeminiActive;
 
   // Enable all neural modes using the same single key authorization context
   const isEmbeddingActive = isLlmActive;
   const isVectorDbActive = isLlmActive;
 
-  // SYSTEM PROMPT to align behavior with HASEX OS
-  const systemPrompt = `You are HASEX AI, an execution-first intelligence system designed to maximize clarity, decision quality, and real-world action.
+  // SYSTEM PROMPT to align behavior with MAVERICK OS
+  const systemPrompt = `You are MAVERICK AI, an execution-first intelligence system designed to maximize clarity, decision quality, and real-world action.
 
 ---
 
@@ -543,7 +920,7 @@ app.post("/api/nvidia-agent", async (req, res) => {
 
 ## 4. THINKING & AUDITING BEHAVIOR
 - Prioritize real-world constraints and operational feasibility.
-- Detect weak logic, faulty assumptions, procrastination patterns, or flawed reasoning in user statements and correct them directly, cleanly, and without dilution. (Exception: When selectedMode is 'learn', do not flag the user's conceptual questions or learning queries as 'procrastination' or 'wasting time'. Always treat education, concept queries, and learning with supportive, clear, actionable explanation responses.)
+- Support the user directly and friendly, without lecturing them on procrastination or focus loss. Do NOT issue distraction alerts, warnings about wasting time, or focus leakage. Focus 100% on providing a neat, high-quality, direct answer/solution.
 - Convert abstract ideas into executable, concrete tasks.
 
 ---
@@ -570,7 +947,7 @@ app.post("/api/nvidia-agent", async (req, res) => {
 
 ## 8. ACTIVE MODE BEHAVIOR
 Your mode behavior adjusts according to the operant stream:
-- LEARN (Selected: ${selectedMode === "learn" ? "ACTIVE" : "INACTIVE"}): Optimize for explaining complex concepts, academic support, ELI5 simplified translation, and zero-friction conceptual study. NEVER accuse the user of wasting time, overthinking, or procrastinating when asking questions or studying concepts in this mode.
+- LEARN (Selected: ${selectedMode === "learn" ? "ACTIVE" : "INACTIVE"}): Optimize for explaining complex concepts, academic support, ELI5 simplified translation, and zero-friction conceptual study. State the concept or answer clearly and elegantly without extra warnings.
 - GENERAL CHAT / BRAINSTORM (Selected: ${selectedMode === "brainstorm" || selectedMode === "strategy" ? "ACTIVE" : "INACTIVE"}): Optimize for idea generation, planning developer task sequences, and brainstorming structures.
 - JOURNAL (Selected: ${selectedMode === "journal" ? "ACTIVE" : "INACTIVE"}): Optimize for reflection, structured self-analysis, and reviewing logged experiences.
 - CODE (Selected: ${selectedMode === "code" || selectedMode === "create" ? "ACTIVE" : "INACTIVE"}): Optimize for direct software implementation, debugging, and code logic.
@@ -594,7 +971,7 @@ If requested, or if the system feels unstable, responses are vague, or the previ
 
 ## 11. MODEL PRIVACY PROTOCOL (CRITICAL)
 - Do NOT mention, print, or disclose any specific model names, architectures, or builders (such as Kimi, Gemini, Nemotron, Llama, DeepSeek, Whisper, Parakeet, etc.) to the user under any circumstances.
-- If asked which models are being used, or what model powers you, state only that you are powered by the unified HASEX AI proprietary stream/reasoning engine.`;
+- If asked which models are being used, or what model powers you, state only that you are powered by the unified MAVERICK AI proprietary stream/reasoning engine.`;
 
   const requestMessages = [
     { role: "system", content: systemPrompt },
@@ -602,13 +979,13 @@ If requested, or if the system feels unstable, responses are vague, or the previ
   ];
 
   if (!isLlmActive) {
-    console.log(`HASEX_OS // Simulating HASEX AI agent fallback.`);
+    console.log(`MAVERICK_OS // Simulating MAVERICK AI agent fallback.`);
     
     const lastUserMessage = messages[messages.length - 1]?.content || "System status check";
     let simulatedReply = "";
 
     if (lastUserMessage.toLowerCase().includes("status") || lastUserMessage.toLowerCase().includes("hello")) {
-      simulatedReply = `### HASEX AI // STATUS: ACTIVE
+      simulatedReply = `### MAVERICK AI // STATUS: ACTIVE
 
 I am active and ready to direct your attention vectors.
 
@@ -635,7 +1012,7 @@ Tell me what you are working on or what is blocking your progress.
         recommendation = "Write down the three biggest worries on a piece of paper, then walk away from your desk for 5 minutes.";
       }
 
-      simulatedReply = `### HASEX AI // ANALYSIS SECTOR OVERVIEW
+      simulatedReply = `### MAVERICK AI // ANALYSIS SECTOR OVERVIEW
 
 **Observation:**
 ${observation}
@@ -652,6 +1029,32 @@ ${recommendation}`;
   }
 
   try {
+    const geminiClient = getGeminiClient();
+    if (geminiClient) {
+      try {
+        console.log(`HASEX_OS // Invoking Gemini API for agent response...`);
+        const historyText = requestMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n\n") + "\n\nProvide the next ASSISTANT response:";
+
+        const response = await geminiClient.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: historyText,
+          config: {
+            systemInstruction: systemPrompt,
+            temperature: 0.5
+          }
+        });
+
+        const content = response.text || "";
+        return res.json({
+          content: content,
+          usingFallback: false,
+          activeKeysState: { isEmbeddingActive, isVectorDbActive, isLlmActive }
+        });
+      } catch (geminiError: any) {
+        console.warn(`HASEX_OS // Gemini generation failed in nvidia-agent endpoint: ${geminiError.message}`);
+      }
+    }
+
     console.log(`HASEX_OS // Dispatching conversations to NVIDIA NIM API utilizing ${activeModelName}...`);
     
     const modelsToTry = activeModelName === "Llama Vision"
@@ -773,10 +1176,10 @@ ${recommendation}`;
     }
 
   } catch (error: any) {
-    console.error("HASEX_OS // NVIDIA NIM agent failure:", error);
+    console.error("MAVERICK_OS // NVIDIA NIM agent failure:", error);
     
     return res.json({
-      content: `### HASEX AI // SYSTEM OFFLINE
+      content: `### MAVERICK AI // SYSTEM OFFLINE
 
 An issue occurred while reaching the AI reasoning server.
 
@@ -1172,7 +1575,7 @@ async function startServer() {
       appType: "spa",
     });
     app.use(vite.middlewares);
-    console.log("HASEX_OS // Vite middleware loaded.");
+    console.log("MAVERICK_OS // Vite middleware loaded.");
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
@@ -1182,8 +1585,8 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`HASEX_OS // System server booted on port ${PORT}`);
-    console.log(`HASEX_OS // Ingress gateway: http://0.0.0.0:${PORT}`);
+    console.log(`MAVERICK_OS // System server booted on port ${PORT}`);
+    console.log(`MAVERICK_OS // Ingress gateway: http://0.0.0.0:${PORT}`);
   });
 }
 

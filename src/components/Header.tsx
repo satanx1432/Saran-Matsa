@@ -13,7 +13,9 @@ export default function Header({ currentTab, onNavigate, titleSuffix }: HeaderPr
         {/* Leading icon */}
         <div 
           onClick={() => onNavigate("radar")}
-          className="flex items-center justify-center w-10 h-10 text-[#b9cacb] hover:text-[#00f0ff] transition-colors duration-300 cursor-pointer active:scale-95"
+          className={`flex items-center justify-center w-10 h-10 text-[#b9cacb] hover:text-[#00f0ff] transition-colors duration-300 cursor-pointer active:scale-95 ${
+            currentTab === "hasex" ? "invisible pointer-events-none" : ""
+          }`}
           id="hdr-lead-icon"
         >
           <Terminal size={20} className="font-mono" />
@@ -25,16 +27,18 @@ export default function Header({ currentTab, onNavigate, titleSuffix }: HeaderPr
           id="hdr-brand"
         >
           <div className="w-1.5 h-1.5 bg-[#00dbe9] signal-glow rounded-none animate-pulse"></div>
-          HASEX_OS{titleSuffix ? ` // ${titleSuffix}` : ""}
+          {currentTab === "hasex" ? "HASEX CORE // MAVERICK" : <>HASEX_OS{titleSuffix ? ` // ${titleSuffix}` : ""}</>}
         </div>
 
         {/* Trailing icon */}
         <div 
           onClick={() => onNavigate("radar")}
-          className="flex items-center justify-center w-10 h-10 text-[#b9cacb] hover:text-[#00f0ff] transition-colors duration-300 cursor-pointer active:scale-95"
+          className={`flex items-center justify-center w-10 h-10 text-[#b9cacb] hover:text-[#00f0ff] transition-colors duration-300 cursor-pointer active:scale-95 ${
+            currentTab === "hasex" ? "invisible pointer-events-none" : ""
+          }`}
           id="hdr-trail-icon"
         >
-          {currentTab === "core" ? (
+          {titleSuffix && titleSuffix.includes("SESSION") ? (
             <AlertTriangle size={20} className="text-[#ffb4ab]" />
           ) : (
             <Sliders size={20} />

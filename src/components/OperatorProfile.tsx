@@ -7,7 +7,8 @@ import {
   RefreshCw, 
   AlertCircle,
   Mail,
-  Info
+  Info,
+  AlertOctagon
 } from "lucide-react";
 import { 
   auth, 
@@ -16,11 +17,39 @@ import {
 } from "../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 
-export default function OperatorProfile() {
+interface OperatorProfileProps {
+  onTriggerQuiz?: () => void;
+}
+
+export default function OperatorProfile({ onTriggerQuiz }: OperatorProfileProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [subTab, setSubTab] = useState<"gateway" | "about">("gateway");
+  const [subTab, setSubTab] = useState<"gateway" | "about" | "evaluation">("gateway");
+  const [evaluationData, setEvaluationData] = useState<any | null>(null);
+
+  // Load appraisal results on mounting or tab selection
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("hasex_evaluation");
+      if (cached) {
+        setEvaluationData(JSON.parse(cached));
+      }
+    } catch {
+      setEvaluationData(null);
+    }
+  }, [subTab]);
+
+  const handleResetEvaluation = () => {
+    if (confirm("WARNING // Executing this procedure will clear your current cognitive appraisal metrics registry. Trigger full reboot of onboarding diagnostics?")) {
+      localStorage.removeItem("hasex_evaluation");
+      if (onTriggerQuiz) {
+        onTriggerQuiz();
+      } else {
+        window.location.reload();
+      }
+    }
+  };
 
   // Simulated Custom Email/Pass fields for terminal login
   const [emailInput, setEmailInput] = useState("");
@@ -139,6 +168,17 @@ export default function OperatorProfile() {
           }`}
         >
           GATEWAY SECURE
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubTab("evaluation")}
+          className={`px-4 py-2.5 font-bold uppercase transition-all tracking-wider cursor-pointer border-b-[2px] ${
+            subTab === "evaluation"
+              ? "border-[#00f0ff] text-[#00f0ff] bg-[#00f0ff]/5"
+              : "border-transparent text-[#b9cacb]/55 hover:text-white hover:bg-white/3"
+          }`}
+        >
+          COGNITIVE APPRAISAL
         </button>
         <button
           type="button"
@@ -268,6 +308,122 @@ export default function OperatorProfile() {
             </div>
           )}
         </div>
+      ) : subTab === "evaluation" ? (
+        /* Evaluation report subTab */
+        <div className="border-[0.5px] border-[#3b494b]/30 bg-[#0a0a0c]/90 px-5 py-6 flex flex-col relative overflow-hidden" id="appraisal-profile-panel">
+          <div className="absolute right-0 top-0 w-24 h-24 bg-[#00f0ff]/2 rounded-none blur-2xl pointer-events-none" />
+          
+          {evaluationData ? (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center justify-between border-b-[0.5px] border-[#3b494b]/20 pb-4 select-none">
+                <div className="flex items-center gap-2">
+                  <div className="p-1 px-2 border-[0.5px] border-[#00f0ff]/40 text-[#00f0ff] bg-[#00f0ff]/3 font-bold text-[9px]">
+                    ANALYSIS DONE
+                  </div>
+                  <span className="font-mono text-[9px] text-[#b9cacb]/40 tracking-widest uppercase">COGNITIVE INDEX</span>
+                </div>
+                <div className="text-xs font-bold font-mono text-[#00f0ff] bg-[#00f0ff]/10 border-[0.5px] border-[#00f0ff]/30 px-2.5 py-0.5">
+                  OVERALL: {evaluationData.overallScore?.toFixed(2)}
+                </div>
+              </div>
+
+              {/* Trait breakdown rows */}
+              <div className="flex flex-col gap-2.5 font-mono select-none">
+                {Object.entries(evaluationData.scores || {}).map(([trait, score]: any) => (
+                  <div key={trait} className="flex flex-col gap-1">
+                    <div className="flex justify-between text-[10px] text-[#b9cacb]">
+                      <span>{trait.toUpperCase()}</span>
+                      <span className="text-white font-bold">{score?.toFixed(2)}</span>
+                    </div>
+                    <div className="w-full h-1 bg-black/40 border-[0.5px] border-[#3b494b]/15 position-relative overflow-hidden">
+                      <div 
+                        className={`h-full ${
+                          score >= 0.8 ? "bg-[#00f0ff]" : score >= 0.6 ? "bg-[#c57cff]" : score >= 0.4 ? "bg-[#ffcb7c]" : "bg-red-400"
+                        }`}
+                        style={{ width: `${score * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t-[0.5px] border-[#3b494b]/15 pt-4 text-xs font-sans text-[#b9cacb]/85 flex flex-col gap-4">
+                <div className="flex flex-col gap-1 select-text">
+                  <span className="font-mono text-[8.5px] text-[#00f0ff] font-bold block uppercase tracking-wider">SUMMARY PROFILE:</span>
+                  <p className="leading-relaxed text-[11.5px] text-[#b9cacb]/80">{evaluationData.summary}</p>
+                </div>
+
+                <div className="flex flex-col gap-1 text-left select-text">
+                  <span className="font-mono text-[8.5px] text-[#c57cff] font-bold block uppercase tracking-wider">STRENGTHS MATRIX:</span>
+                  <ul className="list-disc pl-4 space-y-1 text-[11px] text-[#b9cacb]/80">
+                    {evaluationData.strengths?.map((str: string, idx: number) => (
+                      <li key={idx}>{str}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex flex-col gap-1 text-left select-text">
+                  <span className="font-mono text-[8.5px] text-[#ffcb7c] font-bold block uppercase tracking-wider">WEAKNESS VECTORS:</span>
+                  <ul className="list-disc pl-4 space-y-1 text-[11px] text-[#b9cacb]/80">
+                    {evaluationData.weaknesses?.map((wk: string, idx: number) => (
+                      <li key={idx}>{wk}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex flex-col gap-1 text-left select-text">
+                  <span className="font-mono text-[8.5px] text-red-400 font-bold block uppercase tracking-wider">METACOGNITIVE BLIND SPOT:</span>
+                  <p className="leading-relaxed text-[11px] text-[#b9cacb]/80">{evaluationData.blindSpots?.[0]}</p>
+                </div>
+
+                <div className="flex flex-col gap-1 text-left select-text">
+                  <span className="font-mono text-[8.5px] text-[#00f0ff] font-bold block uppercase tracking-wider">NEXT STRATEGIC ACTIONS:</span>
+                  <ul className="list-decimal pl-4 space-y-1 text-[11.5px] text-[#dbfcff]">
+                    {evaluationData.nextActions?.map((act: string, idx: number) => (
+                      <li key={idx}>{act}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleResetEvaluation}
+                className="w-full py-2.5 mt-2 bg-black hover:bg-[#00f0ff]/10 text-[#00f0ff] border-[0.5px] border-[#00f0ff]/30 hover:border-[#00f0ff]/60 font-mono text-[9px] font-bold uppercase tracking-widest rounded-none select-none transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <RefreshCw size={11} className="animate-pulse" />
+                <span>RE-EVALUATE COGNITIVE BASELINE</span>
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-8 flex flex-col items-center justify-center gap-5">
+              <AlertOctagon className="text-[#ffcb7c] animate-pulse" size={28} />
+              
+              <div className="flex flex-col gap-1.5">
+                <span className="block font-mono text-[10px] text-white font-black uppercase tracking-widest leading-none">
+                  EVALUATION REGISTRY OFFLINE
+                </span>
+                <p className="font-sans text-[11px] text-[#b9cacb]/65 max-w-xs leading-relaxed mx-auto">
+                  Handshake profile assessment required to compile cognitive indexes and configure traits.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (onTriggerQuiz) {
+                    onTriggerQuiz();
+                  } else {
+                    window.location.reload();
+                  }
+                }}
+                className="py-2.5 px-6 bg-[#ffcb7c]/10 text-[#ffcb7c] hover:bg-[#ffcb7c]/20 border-[0.5px] border-[#ffcb7c]/30 font-mono text-[9px] font-bold uppercase tracking-widest rounded-none select-none transition-all cursor-pointer active:scale-95"
+              >
+                BOOT COGNITIVE HANDSHAKE
+              </button>
+            </div>
+          )}
+        </div>
       ) : (
         /* About OS subTab */
         <div className="border-[0.5px] border-[#3b494b]/30 bg-[#0a0a0c]/90 px-6 py-8 flex flex-col relative overflow-hidden" id="about-info-panel">
@@ -280,7 +436,7 @@ export default function OperatorProfile() {
             <div>
               <span className="block font-mono text-[8px] text-[#b9cacb]/40 tracking-widest uppercase leading-none">SYSTEM DESIGNATION</span>
               <h2 className="font-sans text-xs font-bold text-white uppercase tracking-wider mt-1">
-                Beta v0.1
+                Maverick AI
               </h2>
             </div>
           </div>
@@ -289,7 +445,7 @@ export default function OperatorProfile() {
             <div className="flex flex-col gap-1.5 text-left select-none">
               <span className="font-mono text-[7.5px] text-[#00f0ff] uppercase tracking-widest block font-bold leading-none">AGENT SPECIFICATION</span>
               <p className="font-sans text-[11px] text-[#b9cacb]/70 leading-relaxed mt-1">
-                HASEX Assistant (Beta v0.1) is an advanced task management and cognitive mapping environment with fully functional system logging, real-time AI capabilities, and offline fallbacks.
+                Maverick AI is an advanced task management and cognitive mapping environment with fully functional system logging, real-time AI capabilities, and offline fallbacks.
               </p>
             </div>
 

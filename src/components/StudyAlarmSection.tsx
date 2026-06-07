@@ -104,7 +104,7 @@ export default function StudyAlarmSection() {
         "Perfect time is now! Grab water and let's start!"
       ];
       const randomTime = times[Math.floor(Math.random() * times.length)];
-      setAiSuggestion(`GPT-OSS 120B says: "${randomTime}"`);
+      setAiSuggestion(`HASEX AI says: "${randomTime}"`);
     }
     
     setStep("show_suggestion");
@@ -130,27 +130,48 @@ export default function StudyAlarmSection() {
       <div className="flex items-center gap-2 border-b border-[#3b494b]/30 pb-2.5">
         <Brain className="text-[#c57cff] w-4 h-4 animate-pulse" />
         <span className="font-mono text-[10px] tracking-widest text-[#c57cff] font-bold uppercase">
-          AI STUDY BUDDY (GPT-OSS 120B)
+          HASEX STUDY HELPER
         </span>
       </div>
 
       {step === "ask_plan" && (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-semibold text-[#e2e2e2] leading-relaxed">
-            Do you want to know what time you should study or do your work? Let's check together!
-          </p>
-          <button
-            onClick={() => setStep("input_task")}
-            className="w-full bg-[#c57cff] hover:bg-[#d8a3ff] text-black font-semibold text-xs py-2.5 rounded-none transition-all cursor-pointer font-sans text-center active:scale-95"
-          >
-            Yes, tell me what time to do it!
-          </button>
-          <button
-            onClick={() => setStep("input_task")}
-            className="w-full border border-neutral-800 hover:border-neutral-600 text-[#b9cacb]/60 hover:text-white text-xs py-2 rounded-none transition-all cursor-pointer font-sans text-center"
-          >
-            I want to set a timer/stopwatch!
-          </button>
+        <div className="flex flex-col gap-4 py-1">
+          <h3 className="font-sans text-base font-bold text-white tracking-tight">
+            Need help staying focused?
+          </h3>
+          <ul className="flex flex-col gap-2.5 text-xs text-[#b9cacb] font-medium pl-1 select-none">
+            <li className="flex items-baseline gap-2 font-sans">
+              <span className="w-1.5 h-1.5 bg-[#c57cff] rounded-none inline-block flex-shrink-0" />
+              <span>Create a study plan</span>
+            </li>
+            <li className="flex items-baseline gap-2 font-sans">
+              <span className="w-1.5 h-1.5 bg-[#c57cff] rounded-none inline-block flex-shrink-0" />
+              <span>Set a focus timer</span>
+            </li>
+            <li className="flex items-baseline gap-2 font-sans">
+              <span className="w-1.5 h-1.5 bg-[#c57cff] rounded-none inline-block flex-shrink-0" />
+              <span>Get unstuck on a task</span>
+            </li>
+          </ul>
+
+          <div className="flex flex-col gap-2 mt-2">
+            {/* Primary Button */}
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent("open-hasex-ai", { detail: { mode: "learn" } }));
+              }}
+              className="w-full bg-[#c57cff] hover:bg-[#d8a3ff] text-black font-sans font-bold text-sm py-3 rounded-none transition-all cursor-pointer text-center active:scale-95 shadow-[0_0_15px_rgba(197,124,255,0.2)]"
+            >
+              Talk to HASEX
+            </button>
+            {/* Secondary Button */}
+            <button
+              onClick={() => setStep("input_task")}
+              className="w-full border border-[#c57cff]/30 hover:border-[#c57cff]/70 text-[#c57cff] hover:bg-[#c57cff]/10 font-mono text-xs py-2.5 rounded-none transition-all cursor-pointer text-center active:scale-95 uppercase font-bold"
+            >
+              Set Timer
+            </button>
+          </div>
         </div>
       )}
 
@@ -162,7 +183,7 @@ export default function StudyAlarmSection() {
           <input
             type="text"
             className="w-full bg-[#111112] text-[#e2e2e2] border-[0.5px] border-[#3b494b]/40 focus:border-[#c57cff] focus:outline-none p-2.5 text-xs font-sans placeholder-neutral-600 rounded-none transition-colors"
-            placeholder="e.g. Study Math, practice code, draw"
+            placeholder="e.g. Study Physics, write essay, practice math"
             value={taskName}
             onChange={(e) => setTaskName(e.target.value)}
           />
@@ -173,7 +194,7 @@ export default function StudyAlarmSection() {
               disabled={!taskName.trim()}
               className="bg-[#00f0ff] hover:bg-[#4df5ff] disabled:opacity-40 disabled:cursor-not-allowed text-black font-semibold text-xs py-2.5 rounded-none transition-all cursor-pointer text-center active:scale-95"
             >
-              Ask AI (GPT-OSS 120B)
+              Ask HASEX AI
             </button>
             <button
               onClick={() => {
@@ -195,7 +216,7 @@ export default function StudyAlarmSection() {
             <div className="flex items-center gap-1.5 font-mono text-[9px] text-[#c57cff] uppercase font-bold mb-1">
               <span>💡 SUGGESTION RECEIVED</span>
             </div>
-            {aiSuggestion || "GPT-OSS 120B recommends starting your session in a few seconds to build perfect rhythm!"}
+            {aiSuggestion || "HASEX AI recommends starting your session in a few seconds to build perfect rhythm!"}
           </div>
 
           <div className="border-t border-[#3b494b]/20 pt-3">

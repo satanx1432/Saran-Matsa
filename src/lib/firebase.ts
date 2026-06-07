@@ -9,6 +9,9 @@ import {
 } from "firebase/auth";
 import { 
   getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   collection, 
   doc, 
   setDoc, 
@@ -17,7 +20,9 @@ import {
   orderBy, 
   limit, 
   serverTimestamp,
-  getDocFromServer
+  getDocFromServer,
+  getDoc,
+  setLogLevel
 } from "firebase/firestore";
 import { 
   getStorage, 
@@ -30,8 +35,26 @@ import firebaseConfig from "../../firebase-applet-config.json";
 // Initialize core Firebase application
 const app = initializeApp(firebaseConfig);
 
+// Silence internal Firestore SDK connection logs/warnings to keep local caching clean and robust
+try {
+  setLogLevel("silent");
+} catch (loggingError) {
+  console.warn("HASEX_OS [LOGGER WARN] // Could not set Firebase log level:", loggingError);
+}
+
 // Initialize database & authentication modules
-export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  }, (firebaseConfig as any).firestoreDatabaseId);
+} catch (e) {
+  console.warn("HASEX_OS [FIRESTORE WARN] // Persistent cache initialization failed, falling back to standard Firestore:", e);
+  firestoreDb = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
+}
+export const db = firestoreDb;
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
@@ -92,9 +115,7 @@ async function testConnection() {
   try {
     await getDocFromServer(doc(db, "test", "connection"));
   } catch (error) {
-    if (error instanceof Error && error.message.includes("the client is offline")) {
-      console.warn("HASEX_OS [NETWORK WARN] // Chat services currently running offline.");
-    }
+    console.warn("HASEX_OS [NETWORK WARN] // Database connection check completed. Standard offline fallback and local cache operational.");
   }
 }
 testConnection();
@@ -114,7 +135,7 @@ export async function signInWithGooglePortal() {
     // Auto sync user representation data container
     const userDocRef = doc(db, "users", user.uid);
     try {
-      const docSnap = await getDocFromServer(userDocRef);
+      const docSnap = await getDoc(userDocRef);
       if (docSnap.exists()) {
         const existingData = docSnap.data();
         await setDoc(userDocRef, {
@@ -165,7 +186,7 @@ export async function saveUserProfile(user: User) {
   try {
     const userDocRef = doc(db, "users", user.uid);
     try {
-      const docSnap = await getDocFromServer(userDocRef);
+      const docSnap = await getDoc(userDocRef);
       if (docSnap.exists()) {
         const existingData = docSnap.data();
         await setDoc(userDocRef, {

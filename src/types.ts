@@ -32,6 +32,12 @@ export interface FlowchartData {
 export interface AnalysisResult {
   title: string;
   confidence: number;
+  goal: string;
+  distraction: string;
+  time_lost: string;
+  pattern_detected: string;
+  impact: string;
+  recommended_actions: string[];
   bottleneck_title: string;
   bottleneck_points: string[];
   actionable_title: string;
@@ -53,6 +59,10 @@ export interface CompletedMission {
   reward: number;
   time_spent_s: number;
   completed_at: string;
+  verification_explanation?: string;
+  verification_evidence?: string;
+  verification_reflection?: string;
+  verification_result?: string;
 }
 
 export interface CognitiveLog {

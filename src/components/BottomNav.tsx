@@ -1,4 +1,4 @@
-import { Radar, Database, Layers, Globe, User } from "lucide-react";
+import { Radar, Database, Layers, Globe, User, Cpu } from "lucide-react";
 
 interface BottomNavProps {
   activeTab: string;
@@ -9,9 +9,7 @@ interface BottomNavProps {
 export default function BottomNav({ activeTab, onTabChange, activeMissionCount }: BottomNavProps) {
   const tabs = [
     { id: "radar", label: "TODAY", icon: Radar },
-    { id: "data", label: "JOURNAL", icon: Database },
-    { id: "core", label: "TASKS", icon: Layers, badge: activeMissionCount && activeMissionCount > 0 ? activeMissionCount : undefined },
-    { id: "chat", label: "CHAT", icon: Globe },
+    { id: "hasex", label: "MAVERICK", icon: Cpu },
     { id: "profile", label: "PROFILE", icon: User }
   ];
 
@@ -37,11 +35,6 @@ export default function BottomNav({ activeTab, onTabChange, activeMissionCount }
                       : "text-[#b9cacb]/50 group-hover:text-[#00dbe9]/80"
                   }`} 
                 />
-                {tab.badge && (
-                  <span className="absolute -top-1.5 -right-2 bg-[#ffb4ab] text-black text-[9px] font-mono leading-none px-1 py-0.5 rounded-none font-bold">
-                    {tab.badge}
-                  </span>
-                )}
               </div>
               <span 
                 className={`font-mono text-[10px] tracking-wider transition-all duration-300 ${

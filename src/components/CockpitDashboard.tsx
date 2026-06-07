@@ -160,8 +160,8 @@ export default function CockpitDashboard({
             </span>
           </div>
 
-          <p className="text-sm text-[#e2e2e2] mb-5 font-sans leading-relaxed">
-            Welcome to HASEX. To begin optimizing your daily focus and operations, select the primary mode of AI assistance you require today:
+          <p className="text-xs text-[#b9cacb] mb-5 font-sans leading-relaxed">
+            Select the primary mode of AI assistance you require to optimize your focus and operations today:
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -204,87 +204,7 @@ export default function CockpitDashboard({
             </div>
           </div>
         </div>
-      ) : (
-        /* Welcome back dashboard overview answers the core questions clearly */
-        <div className="glass-panel p-6 bg-[#09090b]/90 border-[1px] border-[#00f0ff]/30 rounded-none text-left relative overflow-hidden transition-all duration-300">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f0ff]/5 rounded-none blur-3xl pointer-events-none" />
-          
-          <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between border-b border-[#3b494b]/20 pb-3 mb-5">
-            <div>
-              <h2 className="font-sans text-xl md:text-2xl font-bold text-[#e2e2e2] tracking-tight uppercase">
-                Welcome back.
-              </h2>
-              <p className="font-sans text-xs text-[#b9cacb]/70 tracking-wide">
-                Here's what matters today.
-              </p>
-            </div>
-          </div>
-
-          {/* Today's Focus, Current Priorities, Upcoming Tasks, Recent Journal Insight */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Card 1: Focus */}
-            <div className="flex flex-col gap-1.5">
-              <span className="font-mono text-[9px] text-[#00f0ff] uppercase tracking-wider font-extrabold block">
-                [ FOCUS FOCUS ]
-              </span>
-              <h4 className="font-sans text-xs font-bold text-neutral-400 uppercase select-none">What should I focus on?</h4>
-              <p className="font-sans text-xs text-[#e2e2e2] leading-relaxed">
-                {assistantMode === "learn" 
-                  ? "Understand difficult concepts, study equations, and query code explanations." 
-                  : "Ship creative mockups, optimize program codes, and configure custom scripts."}
-              </p>
-            </div>
-
-            {/* Card 2: Tasks Due */}
-            <div className="flex flex-col gap-1.5">
-              <span className="font-mono text-[9px] text-[#00f0ff] uppercase tracking-wider font-extrabold block">
-                [ ASSIGNMENTS ]
-              </span>
-              <h4 className="font-sans text-xs font-bold text-neutral-400 uppercase select-none">Upcoming Tasks Due</h4>
-              <p className="font-sans text-xs text-[#e2e2e2] leading-relaxed">
-                {completedMissions.length === 0 
-                  ? "Zero goals recorded. Set up your study timer using the first session button below." 
-                  : `You have completed ${completedMissions.length} sessions recently. Ready for the next loop!`}
-              </p>
-            </div>
-
-            {/* Card 3: Recent Journal Insight */}
-            <div className="flex flex-col gap-1.5">
-              <span className="font-mono text-[9px] text-[#00f0ff] uppercase tracking-wider font-extrabold block">
-                [ CLARITY VECTORS ]
-              </span>
-              <h4 className="font-sans text-xs font-bold text-neutral-400 uppercase select-none font-sans">Recent Journal Insight</h4>
-              <p className="font-sans text-xs text-[#e2e2e2] leading-relaxed italic truncate">
-                &quot;{latestInsightText}&quot;
-              </p>
-            </div>
-
-            {/* Card 4: Action Suggestions */}
-            <div className="flex flex-col gap-2">
-              <span className="font-mono text-[9px] text-[#00f0ff] uppercase tracking-wider font-extrabold block">
-                [ GUIDANCE ]
-              </span>
-              <h4 className="font-sans text-xs font-bold text-neutral-400 uppercase select-none">Suggested next action</h4>
-              <div className="flex flex-col gap-1.5">
-                <button 
-                  onClick={() => {
-                    window.dispatchEvent(new CustomEvent("open-hasex-ai", { detail: { mode: assistantMode } }));
-                  }}
-                  className="bg-[#00f0ff]/10 hover:bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/30 text-[9px] font-mono py-1 rounded-none uppercase font-bold text-center cursor-pointer transition-all active:scale-95"
-                >
-                  Talk to HASEX AI
-                </button>
-                <button 
-                  onClick={onNavigateToAnalyze}
-                  className="bg-[#e5e2e3] hover:bg-white text-black text-[9px] font-mono py-1 rounded-none uppercase font-bold text-center cursor-pointer transition-all active:scale-95"
-                >
-                  Start Your First Session
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      ) : null}
 
       {/* Statistics Block */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -361,15 +281,6 @@ export default function CockpitDashboard({
               >
                 <span>START YOUR FIRST SESSION</span>
                 <ArrowRight size={13} className="stroke-[2.5px]" />
-              </button>
-
-              <button
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent("open-hasex-ai", { detail: { mode: assistantMode || "learn" } }));
-                }}
-                className="w-full bg-transparent hover:bg-white/5 text-[#00f0ff] border-[0.5px] border-[#00f0ff]/60 hover:border-[#00f0ff] font-mono text-xs tracking-widest uppercase py-3 px-4 rounded-none transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-              >
-                <span>TALK TO HASEX AI</span>
               </button>
             </div>
           </div>
