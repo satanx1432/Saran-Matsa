@@ -11,7 +11,6 @@ import {
   CheckCircle, 
   ListTodo, 
   ShieldAlert,
-  Sliders,
   Sparkles,
   Terminal,
   MessageSquare,
@@ -33,12 +32,13 @@ import {
   Search,
   FileText,
   X,
-  SlidersHorizontal,
   Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { db, auth } from "../lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import FocusTimerPlugin from "./FocusTimerPlugin";
+import MaverickLogo from "./MaverickLogo";
 
 interface Traits {
   action: number;
@@ -109,105 +109,7 @@ interface ChatThread {
   messages: ChatMessage[];
 }
 
-// Custom Cyberpunk Vector Logo Generator
-const generateCyberpunkLogoSvg = (concept: string, color: string, style: string): string => {
-  const hexColor = color;
-  const strokeWidth = 2;
-  let paths = "";
-  
-  if (style === "eye") {
-    paths = `
-      <circle cx="60" cy="60" r="48" stroke="${hexColor}" stroke-width="1" stroke-dasharray="3,3" fill="none" opacity="0.3" />
-      <circle cx="60" cy="60" r="42" stroke="${hexColor}" stroke-width="1.5" fill="none" opacity="0.6" />
-      <circle cx="60" cy="60" r="28" stroke="${hexColor}" stroke-width="0.8" stroke-dasharray="1,2" fill="none" />
-      <path d="M 18,60 C 35,26 85,26 102,60 C 85,94 35,94 18,60 Z" stroke="${hexColor}" stroke-width="${strokeWidth}" fill="none" />
-      <circle cx="60" cy="60" r="14" stroke="${hexColor}" stroke-width="2" fill="none" />
-      <circle cx="60" cy="60" r="6" fill="${hexColor}" />
-      <line x1="60" y1="5" x2="60" y2="15" stroke="${hexColor}" stroke-width="2" />
-      <line x1="60" y1="105" x2="60" y2="115" stroke="${hexColor}" stroke-width="2" />
-      <line x1="5" y1="60" x2="15" y2="60" stroke="${hexColor}" stroke-width="2" />
-      <line x1="105" y1="60" x2="115" y2="60" stroke="${hexColor}" stroke-width="2" />
-      <path d="M 8,20 L 8,8 L 20,8" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <path d="M 112,20 L 112,8 L 100,8" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <path d="M 8,100 L 8,112 L 20,112" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <path d="M 112,100 L 112,112 L 100,112" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-    `;
-  } else if (style === "wolf") {
-    paths = `
-      <polygon points="60,20 40,50 60,65" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <polygon points="60,20 80,50 60,65" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <polygon points="40,50 22,42 30,68" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <polygon points="80,50 98,42 90,68" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <polygon points="40,50 60,65 30,68" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <polygon points="80,50 60,65 90,68" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <polygon points="30,68 60,65 60,95" stroke="${hexColor}" stroke-width="2" fill="none" />
-      <polygon points="90,68 60,65 60,95" stroke="${hexColor}" stroke-width="2" fill="none" />
-      <polygon points="30,68 15,60 10,85 18,98 30,68" stroke="${hexColor}" stroke-width="1" fill="none" opacity="0.4" />
-      <polygon points="90,68 105,60 110,85 102,98 90,68" stroke="${hexColor}" stroke-width="1" fill="none" opacity="0.4" />
-      <polygon points="40,50 25,12 45,35" stroke="${hexColor}" stroke-width="1.8" fill="none" />
-      <polygon points="80,50 95,12 75,35" stroke="${hexColor}" stroke-width="1.8" fill="none" />
-      <polygon points="47,48 55,52 45,54" fill="${hexColor}" />
-      <polygon points="73,48 65,52 75,54" fill="${hexColor}" />
-      <circle cx="60" cy="95" r="2.5" fill="${hexColor}" />
-    `;
-  } else if (style === "shield") {
-    paths = `
-      <polygon points="60,10 105,32 105,88 60,110 15,88 15,32" stroke="${hexColor}" stroke-width="2.5" fill="none" />
-      <polygon points="60,18 97,36 97,84 60,102 23,84 23,36" stroke="${hexColor}" stroke-width="1" fill="none" opacity="0.4" stroke-dasharray="2,2" />
-      <line x1="60" y1="25" x2="60" y2="55" stroke="${hexColor}" stroke-width="2" />
-      <circle cx="60" cy="55" r="4" fill="${hexColor}" />
-      <line x1="60" y1="55" x2="40" y2="70" stroke="${hexColor}" stroke-width="1.8" />
-      <circle cx="40" cy="70" r="3" fill="${hexColor}" />
-      <line x1="60" y1="55" x2="80" y2="70" stroke="${hexColor}" stroke-width="1.8" />
-      <circle cx="80" cy="70" r="3" fill="${hexColor}" />
-      <line x1="40" y1="70" x2="40" y2="92" stroke="${hexColor}" stroke-width="1.5" />
-      <circle cx="40" cy="92" r="2" fill="${hexColor}" />
-      <line x1="80" y1="70" x2="80" y2="92" stroke="${hexColor}" stroke-width="1.5" />
-      <circle cx="80" cy="92" r="2" fill="${hexColor}" />
-      <rect x="52" y="73" width="16" height="12" rx="1" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-      <path d="M 56,73 L 56,69 C 56,66 64,66 64,69 L 64,73" stroke="${hexColor}" stroke-width="1.5" fill="none" />
-    `;
-  } else if (style === "node") {
-    paths = `
-      <ellipse cx="60" cy="60" rx="46" ry="16" stroke="${hexColor}" stroke-width="1.5" fill="none" transform="rotate(30 60 60)" />
-      <ellipse cx="60" cy="60" rx="46" ry="16" stroke="${hexColor}" stroke-width="1.5" fill="none" transform="rotate(-30 60 60)" />
-      <ellipse cx="60" cy="60" rx="46" ry="16" stroke="${hexColor}" stroke-width="1" fill="none" transform="rotate(90 60 60)" opacity="0.4" />
-      <rect x="42" y="42" width="36" height="36" stroke="${hexColor}" stroke-width="2.5" fill="#070708" />
-      <rect x="48" y="48" width="24" height="24" stroke="${hexColor}" stroke-width="1" stroke-dasharray="2,1" fill="none" />
-      <line x1="60" y1="12" x2="60" y2="42" stroke="${hexColor}" stroke-width="1" stroke-dasharray="2,2" />
-      <line x1="60" y1="78" x2="60" y2="108" stroke="${hexColor}" stroke-width="1" stroke-dasharray="2,2" />
-      <line x1="12" y1="60" x2="42" y2="60" stroke="${hexColor}" stroke-width="1" stroke-dasharray="2,2" />
-      <line x1="78" y1="60" x2="108" y2="60" stroke="${hexColor}" stroke-width="1" stroke-dasharray="2,2" />
-      <circle cx="60" cy="60" r="5" fill="${hexColor}" />
-      <circle cx="60" cy="12" r="4" fill="${hexColor}" />
-      <circle cx="60" cy="108" r="4" fill="${hexColor}" />
-      <circle cx="12" cy="60" r="4" fill="${hexColor}" />
-      <circle cx="108" cy="60" r="4" fill="${hexColor}" />
-      <text x="60" y="64" font-family="monospace" font-size="5" fill="#ffffff" font-weight="bold" text-anchor="middle">CPU</text>
-    `;
-  } else {
-    // Default Iconic HASEX Operational Crest
-    paths = `
-      <circle cx="60" cy="60" r="52" stroke="${hexColor}" stroke-width="2.5" fill="none" />
-      <circle cx="60" cy="60" r="46" stroke="${hexColor}" stroke-width="0.8" stroke-dasharray="3,1" fill="none" opacity="0.7" />
-      <path d="M 30,42 L 90,42 M 30,78 L 90,78" stroke="${hexColor}" stroke-width="1" opacity="0.3" stroke-dasharray="2,2" />
-      <path d="M 42,30 L 42,90 M 78,30 L 78,90" stroke="${hexColor}" stroke-width="1" opacity="0.3" stroke-dasharray="2,2" />
-      <path d="M 35,46 L 35,74 M 47,46 L 47,74 M 35,60 L 47,60" stroke="${hexColor}" stroke-width="3" stroke-linecap="square" />
-      <path d="M 54,74 L 59,46 L 66,74 M 55,64 L 64,64" stroke="${hexColor}" stroke-width="3" stroke-linecap="square" fill="none" />
-      <path d="M 72,49 C 76,45 83,45 87,49 C 91,53 88,58 82,60 C 76,62 73,67 77,71 C 81,75 88,75 92,71" stroke="${hexColor}" stroke-width="3" stroke-linecap="square" fill="none" />
-      <rect x="42" y="86" width="36" height="8" fill="${hexColor}" rx="1" />
-      <text x="60" y="93" font-family="monospace" font-size="6" fill="#000000" font-weight="black" text-anchor="middle">MVK_v1.0</text>
-      <circle cx="60" cy="18" r="1.5" fill="${hexColor}" />
-      <circle cx="48" cy="20" r="1.5" fill="${hexColor}" />
-      <circle cx="72" cy="20" r="1.5" fill="${hexColor}" />
-    `;
-  }
-  
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" style="width:100%; height:100%;">
-    <rect width="120" height="120" fill="#070708" rx="4" />
-    ${paths}
-  </svg>`;
-};
+// Maverick Engine Component definition
 
 export default function MaverickEngine() {
   const [threads, setThreads] = useState<ChatThread[]>([]);
@@ -217,6 +119,7 @@ export default function MaverickEngine() {
   const [pipelinePhase, setPipelinePhase] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const [collapseTraits, setCollapseTraits] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
   
   // RAG / NIM API configuration keys
   const [showKeysConfig, setShowKeysConfig] = useState(false);
@@ -225,7 +128,7 @@ export default function MaverickEngine() {
   const [llmKey, setLlmKey] = useState(() => localStorage.getItem("rag_llm_key") || "");
 
   // Channel selections & modes
-  const [activeChannel, setActiveChannel] = useState<"diagnostic" | "cascade">("diagnostic");
+  const [activeChannel, setActiveChannel] = useState<"diagnostic" | "cascade">("cascade");
   const [activeMode, setActiveMode] = useState<"learn" | "code" | "brainstorm" | "journal">("learn");
 
   // Adaptive Traits State
@@ -248,23 +151,6 @@ export default function MaverickEngine() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
-  // Logo Maker States
-  const [showLogoMaker, setShowLogoMaker] = useState(false);
-  const [logoConcept, setLogoConcept] = useState("");
-  const [logoColor, setLogoColor] = useState("#00f0ff");
-  const [logoStyle, setLogoStyle] = useState("logo");
-  const [isGeneratingLogo, setIsGeneratingLogo] = useState(false);
-  const [logoLogMessage, setLogoLogMessage] = useState("");
-
-  // Google Forms Deployer States
-  const [showFormsMaker, setShowFormsMaker] = useState(false);
-  const [formTitle, setFormTitle] = useState("");
-  const [formBlockerQuestion, setFormBlockerQuestion] = useState("What was your primary focal bottleneck today?");
-  const [formQuizQuestion, setFormQuizQuestion] = useState("On a scale of 1-10, how clear is your execution target?");
-  const [isDeployingForm, setIsDeployingForm] = useState(false);
-  const [deployedFormLink, setDeployedFormLink] = useState<string | null>(null);
-  const [deployError, setDeployError] = useState<string | null>(null);
-
   // Checklists and reflections
   const [checkedSteps, setCheckedSteps] = useState<Record<string, Record<number, boolean>>>({});
   const [reflectionAnswers, setReflectionAnswers] = useState<Record<string, string>>({});
@@ -277,9 +163,19 @@ export default function MaverickEngine() {
   const [activeTimerMsgId, setActiveTimerMsgId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (force = false) => {
+    if (!chatContainerRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    const container = chatContainerRef.current;
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+    
+    if (force || isAtBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   // Sync API Keys
@@ -294,6 +190,43 @@ export default function MaverickEngine() {
   useEffect(() => {
     localStorage.setItem("rag_llm_key", llmKey);
   }, [llmKey]);
+
+  // Global sync-up event handler for thread selection from sidebar
+  const reloadThreadsFromLocalStorage = () => {
+    try {
+      const savedThreads = localStorage.getItem("maverick_chat_threads_unified") || localStorage.getItem("maverick_chat_threads");
+      if (savedThreads) {
+        const parsed: ChatThread[] = JSON.parse(savedThreads);
+        if (parsed.length > 0) {
+          setThreads(parsed);
+          const savedActiveId = localStorage.getItem("maverick_unified_active_thread_id");
+          if (savedActiveId && parsed.some(t => t.id === savedActiveId)) {
+            const activeThr = parsed.find(t => t.id === savedActiveId);
+            setActiveThreadId(savedActiveId);
+            if (activeThr) {
+              setActiveChannel(activeThr.channel || "cascade");
+              setActiveMode(activeThr.mode || "learn");
+            }
+          } else {
+            setActiveThreadId(parsed[0].id);
+            setActiveChannel(parsed[0].channel || "cascade");
+            setActiveMode(parsed[0].mode || "learn");
+          }
+        }
+      }
+    } catch (err) {
+      console.error("MAVERICK // Synchronizing threads error:", err);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("maverick_history_updated", reloadThreadsFromLocalStorage);
+    window.addEventListener("storage", reloadThreadsFromLocalStorage);
+    return () => {
+      window.removeEventListener("maverick_history_updated", reloadThreadsFromLocalStorage);
+      window.removeEventListener("storage", reloadThreadsFromLocalStorage);
+    };
+  }, []);
 
   // Load components & local sessions from storage
   useEffect(() => {
@@ -313,12 +246,12 @@ export default function MaverickEngine() {
             const activeThr = parsed.find(t => t.id === savedActiveId);
             setActiveThreadId(savedActiveId);
             if (activeThr) {
-              setActiveChannel(activeThr.channel || "diagnostic");
+              setActiveChannel(activeThr.channel || "cascade");
               setActiveMode(activeThr.mode || "learn");
             }
           } else {
             setActiveThreadId(parsed[0].id);
-            setActiveChannel(parsed[0].channel || "diagnostic");
+            setActiveChannel(parsed[0].channel || "cascade");
             setActiveMode(parsed[0].mode || "learn");
           }
         } else {
@@ -334,8 +267,12 @@ export default function MaverickEngine() {
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [threads, activeThreadId, isProcessing, showAttachmentMenu, showLogoMaker, showFormsMaker]);
+    scrollToBottom(false);
+  }, [threads, isProcessing, showAttachmentMenu]);
+
+  useEffect(() => {
+    scrollToBottom(true);
+  }, [activeThreadId]);
 
   // Focus Timer Clock update ticker
   useEffect(() => {
@@ -364,21 +301,21 @@ export default function MaverickEngine() {
     const defaultMsg: ChatMessage = {
       id: "init-msg-unified",
       role: "assistant",
-      content: "System initialized. Welcome to HASEX OS // MAVERICK Command Intel.\n\nI am MAVERICK AI, your execution-oriented guide vector. Toggle between the 'DIAGNOSTIC ASSESSMENT' channel to build your cognitive profile and traits, or use 'CASCADE ALGORITHM CHANNELS' to consult specialized neural cascades.",
+      content: "System initialized. Welcome to HASEX OS // MAVERICK Command Intel.\n\nI am MAVERICK AI, your execution-oriented guide vector. Ready to analyze messy logs, scan schemas, construct layouts, and compile models using selective cascading parameters. Input your instructions:",
       timestamp: new Date().toISOString()
     };
     const newThread: ChatThread = {
       id: `thr-${Date.now()}`,
-      title: "Diagnostic Connection 01",
+      title: "Cascade Flow 01",
       createdAt: new Date().toISOString(),
-      channel: "diagnostic",
+      channel: "cascade",
       mode: "learn",
       messages: [defaultMsg]
     };
     const combined = [newThread];
     setThreads(combined);
     setActiveThreadId(newThread.id);
-    setActiveChannel("diagnostic");
+    setActiveChannel("cascade");
     saveThreadsToStorage(combined, newThread.id);
   };
 
@@ -401,7 +338,7 @@ export default function MaverickEngine() {
       role: "assistant",
       content: channelType === "diagnostic"
         ? "Diagnostic Profiling Vector activated. State your immediate bottleneck, or choose one of the options below to evaluate your focus levels."
-        : `Autonomous Maverick Cascade activated in mode: **${selMode.toUpperCase()}**.\n\nReady to analyze messy logs, scan schemas, construct layouts, and compile models using selective cascading parameters. Input your instructions:`,
+        : `Autonomous Maverick Cascade activated. Input your instructions, code queries, system layouts, or research topics. I will dynamically route your query using our dual-stream routing pipeline:`,
       timestamp: new Date().toISOString()
     };
     const newThread: ChatThread = {
@@ -464,164 +401,6 @@ export default function MaverickEngine() {
     };
     reader.readAsText(file);
     setShowAttachmentMenu(false);
-  };
-
-  // Google Forms real deploy implementation
-  const handleDeployGoogleForm = async () => {
-    setIsDeployingForm(true);
-    setDeployError(null);
-    setDeployedFormLink(null);
-
-    const token = localStorage.getItem("hasex_google_access_token");
-    if (!token) {
-      setDeployError("Authorized Access Token missing. Complete Google Sign-In on the PROFILE page.");
-      setIsDeployingForm(false);
-      return;
-    }
-
-    try {
-      const createResponse = await fetch("https://forms.googleapis.com/v1/forms", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          info: {
-            title: formTitle || "MAVERICK Mental Friction Audit Survey",
-            documentTitle: "MAVERICK OS Dynamic Form"
-          }
-        })
-      });
-
-      if (!createResponse.ok) {
-        throw new Error(`Google Form Rejected: ${createResponse.statusText}`);
-      }
-
-      const formObj = await createResponse.json();
-      const formId = formObj.formId;
-      const responderUri = formObj.responderUri;
-
-      const updateResponse = await fetch(`https://forms.googleapis.com/v1/forms/${formId}:batchUpdate`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          requests: [
-            {
-              createItem: {
-                item: {
-                  title: formBlockerQuestion,
-                  questionItem: {
-                    question: {
-                      required: true,
-                      textQuestion: {}
-                    }
-                  }
-                },
-                location: { index: 0 }
-              }
-            },
-            {
-              createItem: {
-                item: {
-                  title: formQuizQuestion,
-                  questionItem: {
-                    question: {
-                      required: true,
-                      textQuestion: {}
-                    }
-                  }
-                },
-                location: { index: 1 }
-              }
-            }
-          ]
-        })
-      });
-
-      if (!updateResponse.ok) {
-        throw new Error(`Fields update failed: ${updateResponse.statusText}`);
-      }
-
-      setDeployedFormLink(responderUri);
-      
-      // Inject details into the chat thread
-      const formSuccessMsg: ChatMessage = {
-        id: `form-${Date.now()}-assistant`,
-        role: "assistant",
-        content: `### [GOOGLE FORMS DEPLOYED SUCCESS]\n\nA cognitive survey form has been mapped and deployed straight into your Google Workspace account.\n\n* **Form Title:** "${formTitle || "MAVERICK Audit Survey"}"\n* **Form URL:** [Access Deployed Google Form](${responderUri})\n* **Direct Action:** Distribute this questionnaire link to your team or complete the checkpoint report yourself. Outputs are saved in secure Drive spreadsheets instantly!`,
-        timestamp: new Date().toISOString()
-      };
-
-      const updatedMessages = [...(activeThread?.messages || []), formSuccessMsg];
-      const updatedThreads = threads.map(t => {
-        if (t.id === activeThreadId) {
-          return { ...t, messages: updatedMessages };
-        }
-        return t;
-      });
-      setThreads(updatedThreads);
-      saveThreadsToStorage(updatedThreads, activeThreadId);
-
-      setShowFormsMaker(false);
-      setShowAttachmentMenu(false);
-    } catch (err: any) {
-      setDeployError(err.message || "Failed to establish Google API authorization channel.");
-    } finally {
-      setIsDeployingForm(false);
-    }
-  };
-
-  // SVG Logo builder dispatch
-  const handleTriggerLogoBuild = () => {
-    if (isGeneratingLogo) return;
-    setIsGeneratingLogo(true);
-    setLogoLogMessage("INIT_VECTOR_SEED // Connecting branding core...");
-    
-    setTimeout(() => {
-      setLogoLogMessage("GRID_ALIGN // Aligning HUD coordinate tables...");
-      setTimeout(() => {
-        setLogoLogMessage("GLYPH_INJECT // Overlaying custom color lasers...");
-        setTimeout(() => {
-          const finalSvg = generateCyberpunkLogoSvg(logoConcept, logoColor, logoStyle);
-          const conceptText = logoConcept.trim() || "MAVERICK CREST";
-
-          const userMsg: ChatMessage = {
-            role: "user",
-            content: `Engage Creative Vector Machine. Construct professional agent branding logo insignia for conceptual seed "${conceptText}" using ${logoStyle.toUpperCase()} layout pattern with Accent: ${logoColor}.`,
-            id: `logo-user-${Date.now()}`,
-            timestamp: new Date().toISOString()
-          };
-
-          const asstMsg: ChatMessage = {
-            role: "assistant",
-            content: `### [MAVERICK CREATIVE VECTOR INSIGNIA] // COMPILED\nYour custom visual agent credential badge is built and ready for telemetry download.\n\n* **Seed Concept:** "${conceptText}"\n* **Vector Structural Style:** ${logoStyle.toUpperCase()}\n* **Accent Tone:** ${logoColor}\n* **Status:** Operational Integrity Secure (100% vector mapping)`,
-            logoSvg: finalSvg,
-            id: `logo-asst-${Date.now()}`,
-            timestamp: new Date().toISOString()
-          };
-
-          const updatedMessages = [...(activeThread?.messages || []), userMsg, asstMsg];
-          const updatedThreads = threads.map(t => {
-            if (t.id === activeThreadId) {
-              return { ...t, messages: updatedMessages };
-            }
-            return t;
-          });
-          setThreads(updatedThreads);
-          saveThreadsToStorage(updatedThreads, activeThreadId);
-
-          setIsGeneratingLogo(false);
-          setLogoLogMessage("");
-          setShowLogoMaker(false);
-          setShowAttachmentMenu(false);
-          setLogoConcept("");
-        }, 800);
-      }, 700);
-    }, 700);
   };
 
   // Submit diagnostic option select
@@ -713,11 +492,146 @@ export default function MaverickEngine() {
     }
   };
 
+  // Helper to parse and strip timer start commands from Maverick AI responses
+  const processAndTriggerAiTimer = (text: string): string => {
+    let cleanedText = text;
+
+    // Pattern 1: [START_TIMER: mins, task_name]
+    const tagMatch = text.match(/\[START_TIMER:\s*(\d+)\s*,\s*([^\]]+)\]/i);
+    if (tagMatch) {
+      const mins = parseInt(tagMatch[1], 10);
+      const task = tagMatch[2].trim();
+      
+      // Dispatch the start event so FocusTimerPlugin instantly handles it
+      setTimeout(() => {
+        console.log("MAVERICK CHAT TRIGGER // Dispatching Start Event for AI response:", mins, "mins, task:", task);
+        window.dispatchEvent(new CustomEvent("maverick_timer_command", {
+          detail: {
+            action: "start",
+            totalSeconds: mins * 60,
+            task: task || "Maverick Focus Sprint"
+          }
+        }));
+      }, 100);
+
+      // Strip the tag from the text
+      cleanedText = cleanedText.replace(/\[START_TIMER:\s*(\d+)\s*,\s*([^\]]+)\]/gi, "").trim();
+    } else {
+      // Fallback matching if it includes "starting a 25-minute timer" style natural language
+      const lower = text.toLowerCase();
+      let minsFound = 0;
+      let matchedTask = "Maverick Study Session";
+      let matched = false;
+
+      if (lower.includes("start a") || lower.includes("starting a") || lower.includes("set a")) {
+        const minMatch = lower.match(/(?:start|starting|set)\s+a\s+(\d+)\s*(?:-|\s)?(?:minute|min)\s+timer/);
+        const focusMatch = lower.match(/(?:start|starting|set)\s+a\s+(\d+)\s*(?:-|\s)?(?:minute|min)\s+focus/);
+        const sessionMatch = lower.match(/(?:start|starting|set)\s+a\s+(\d+)\s*(?:-|\s)?(?:minute|min)\s+session/);
+        
+        const bestMatch = minMatch || focusMatch || sessionMatch;
+        if (bestMatch) {
+          minsFound = parseInt(bestMatch[1], 10);
+          matched = true;
+        }
+      }
+
+      if (matched && minsFound > 0) {
+        // Let's try to extract task if mentioned
+        const forPart = text.split(/\s(?:for|to|on)\s/i);
+        if (forPart.length > 1) {
+          matchedTask = forPart[forPart.length - 1].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").trim();
+        }
+
+        setTimeout(() => {
+          console.log("MAVERICK CHAT FALLBACK TRIGGER // Dispatching Start Event for AI natural response:", minsFound, "mins");
+          window.dispatchEvent(new CustomEvent("maverick_timer_command", {
+            detail: {
+              action: "start",
+              totalSeconds: minsFound * 60,
+              task: matchedTask || "Maverick Dynamic Sprint"
+            }
+          }));
+        }, 100);
+      }
+    }
+
+    return cleanedText;
+  };
+
   // Submit standard chat message
   const handleSendChatMessage = async (e?: FormEvent) => {
     if (e) e.preventDefault();
     const promptToSend = userInput.trim();
     if (!promptToSend || isProcessing) return;
+
+    // --- MAVERICK TIMER AI CONTROL ROUTER INTERCEPTOR ---
+    const textLower = promptToSend.toLowerCase();
+    let secondsCalculated = 0;
+    let isTimerInitiation = false;
+    let matchedTask = "";
+
+    if (textLower.includes("start") || textLower.includes("set") || textLower.includes("timer") || textLower.includes("focus")) {
+      const matchHour = textLower.match(/(\d+)\s*(?:hour|hr|h\b)/);
+      const matchMin = textLower.match(/(\d+)\s*(?:minute|min|m\b)/);
+      const matchSec = textLower.match(/(\d+)\s*(?:second|sec|s\b)/);
+
+      if (matchHour) {
+        secondsCalculated += parseInt(matchHour[1], 10) * 3600;
+        isTimerInitiation = true;
+      }
+      if (matchMin) {
+        secondsCalculated += parseInt(matchMin[1], 10) * 60;
+        isTimerInitiation = true;
+      }
+      if (matchSec) {
+        secondsCalculated += parseInt(matchSec[1], 10);
+        isTimerInitiation = true;
+      }
+
+      if (!isTimerInitiation && (textLower.includes("timer") || textLower.includes("focus"))) {
+        secondsCalculated = 25 * 60;
+        isTimerInitiation = true;
+      }
+
+      if (isTimerInitiation) {
+        let parsedTask = "";
+        const parts = promptToSend.split(/\s(?:for|to|on)\s/i);
+        if (parts.length > 1) {
+          parsedTask = parts[parts.length - 1].trim();
+        } else {
+          const splitWord = promptToSend.toLowerCase().includes("session") ? "session" : "timer";
+          const subparts = promptToSend.toLowerCase().split(splitWord);
+          if (subparts.length > 1) {
+            parsedTask = subparts[subparts.length - 1].trim();
+          }
+        }
+        matchedTask = parsedTask || "Maverick Direct Work Stream";
+        
+        setTimeout(() => {
+          console.log("MAVERICK CHAT INTERCEPT // Dispatching Start Event for:", secondsCalculated, "secs, task:", matchedTask);
+          window.dispatchEvent(new CustomEvent("maverick_timer_command", {
+            detail: {
+              action: "start",
+              totalSeconds: secondsCalculated,
+              task: matchedTask
+            }
+          }));
+        }, 100);
+      }
+    } else if (textLower === "pause" || textLower === "pause timer" || textLower === "hold timer" || textLower === "stop timer" || textLower === "stop") {
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("maverick_timer_command", {
+          detail: { action: "pause" }
+        }));
+      }, 100);
+    } else if (textLower === "reset" || textLower === "reset timer" || textLower === "resume timer" || textLower === "resume") {
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("maverick_timer_command", {
+          detail: { action: textLower.includes("resume") ? "start" : "reset" }
+        }));
+      }, 100);
+    }
+    // --- END CONTROL RUN ROUTER ---
 
     setIsProcessing(true);
     setUserInput("");
@@ -822,10 +736,11 @@ export default function MaverickEngine() {
         }
 
         const assistMsgId = `asst-${Date.now()}`;
+        const processedDocReport = processAndTriggerAiTimer(data.responseText);
         const assistMsg: ChatMessage = {
           id: assistMsgId,
           role: "assistant",
-          content: data.responseText,
+          content: processedDocReport,
           timestamp: new Date().toISOString(),
           engineResult: data
         };
@@ -861,34 +776,45 @@ export default function MaverickEngine() {
         if (!response.ok) throw new Error("Cascade model array failed to respond.");
         const data = await response.json();
 
+        // Dynamically transition workspace mode according to routed GPT-OSS 20B result
+        const targetMode = data.detectedMode || activeMode;
+        if (data.detectedMode) {
+          setActiveMode(data.detectedMode);
+        }
+
         // Reward study/coding action points in cascade
         const incremental = { ...traits };
-        if (activeMode === "code") {
+        if (targetMode === "code") {
           incremental.action = Math.min(1.0, incremental.action + 0.02);
           incremental.discipline = Math.min(1.0, incremental.discipline + 0.01);
-        } else if (activeMode === "learn") {
+        } else if (targetMode === "learn") {
           incremental.learning = Math.min(1.0, incremental.learning + 0.03);
           incremental.awareness = Math.min(1.0, incremental.awareness + 0.01);
-        } else if (activeMode === "journal") {
+        } else if (targetMode === "journal") {
           incremental.awareness = Math.min(1.0, incremental.awareness + 0.03);
           incremental.persistence = Math.min(1.0, incremental.persistence + 0.01);
-        } else if (activeMode === "brainstorm") {
+        } else if (targetMode === "brainstorm") {
           incremental.courage = Math.min(1.0, incremental.courage + 0.02);
           incremental.learning = Math.min(1.0, incremental.learning + 0.01);
         }
         saveTraitsRegistry(incremental);
 
+        const processedCascadeText = processAndTriggerAiTimer(data.content || "Neural gateway returned blank connection response.");
         const assistMsg: ChatMessage = {
           id: `asst-cascade-${Date.now()}`,
           role: "assistant",
-          content: data.content || "Neural gateway returned blank connection response.",
+          content: processedCascadeText,
           timestamp: new Date().toISOString()
         };
 
         const finalizedMsgs = [...updatedThreadMessages, assistMsg];
         const finalizedThreads = threads.map(t => {
           if (t.id === activeThreadId) {
-            return { ...t, messages: finalizedMsgs };
+            return { 
+              ...t, 
+              messages: finalizedMsgs,
+              mode: targetMode
+            };
           }
           return t;
         });
@@ -900,7 +826,8 @@ export default function MaverickEngine() {
       const failMsg: ChatMessage = {
         id: `fail-${Date.now()}`,
         role: "assistant",
-        content: `### [MAVERICK UPLINK ERROR]\n\nYour telemetry router reports a core pipeline socket exception. Let's isolate active objectives manually:\n\n* **Mode:** ${activeMode.toUpperCase()}\n* **Vector Channel:** ${activeChannel.toUpperCase()}\n\nState clearly: what single operational click or function gets you forward now?`,
+        content: `An uplink exception has occurred with the system.
+Please outline your current task or target objective below to resume.`,
         timestamp: new Date().toISOString()
       };
       const finalized = [...updatedThreadMessages, failMsg];
@@ -956,182 +883,23 @@ export default function MaverickEngine() {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-4rem)] flex flex-col font-mono text-xs select-none relative bg-[#070708]">
+    <div className="w-full h-full flex flex-col font-mono text-xs select-none relative bg-[#070708]">
       
-      {/* HEADER HUD COAX CONTROL LAYOUT PANEL */}
-      <div className="flex flex-col md:flex-row justify-between items-stretch border-b border-[#3b494b]/30 bg-[#0c0c0e] shrink-0 relative z-30 select-none">
-        
-        {/* Core Channel toggle selectors */}
-        <div className="flex flex-grow border-b md:border-b-0 border-[#3b494b]/15">
-          <button
-            onClick={() => {
-              setActiveChannel("diagnostic");
-              const currentT = threads.find(t => t.id === activeThreadId);
-              if (currentT) {
-                const updated = threads.map(t => t.id === activeThreadId ? { ...t, channel: "diagnostic" as const } : t);
-                setThreads(updated);
-                saveThreadsToStorage(updated, activeThreadId);
-              }
-            }}
-            className={`flex-grow py-3 px-4 font-bold tracking-widest text-[9.5px] uppercase transition-all cursor-pointer text-center ${
-              activeChannel === "diagnostic"
-                ? "bg-[#00f0ff]/10 text-[#00f0ff] border-b-2 border-b-[#00f0ff] font-black"
-                : "text-[#b9cacb]/40 hover:text-white hover:bg-[#111]"
-            }`}
-          >
-            🛠️ Profiler Evaluator
-          </button>
-          <button
-            onClick={() => {
-              setActiveChannel("cascade");
-              const currentT = threads.find(t => t.id === activeThreadId);
-              if (currentT) {
-                const updated = threads.map(t => t.id === activeThreadId ? { ...t, channel: "cascade" as const } : t);
-                setThreads(updated);
-                saveThreadsToStorage(updated, activeThreadId);
-              }
-            }}
-            className={`flex-grow py-3 px-4 font-bold tracking-widest text-[9.5px] uppercase transition-all cursor-pointer text-center ${
-              activeChannel === "cascade"
-                ? "bg-[#c57cff]/10 text-[#c57cff] border-b-2 border-b-[#c57cff] font-black"
-                : "text-[#b9cacb]/40 hover:text-white hover:bg-[#111]"
-            }`}
-          >
-            🎓 Cascade Canals
-          </button>
-        </div>
-
-        {/* Sync Controls / Config drawers */}
-        <div className="flex items-center justify-between md:justify-end px-3 py-2 md:py-0 gap-3 border-t md:border-t-0 border-[#3b494b]/15 shrink-0 bg-black/40">
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            className="px-2.5 py-1 bg-neutral-900 border border-neutral-800 text-[#b9cacb] hover:text-[#00f0ff] hover:border-[#00f0ff]/40 text-[8.5px] font-bold uppercase select-none transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <History size={10} />
-            <span>CHATS LOGS ({threads.length})</span>
-          </button>
-
-          <button
-            onClick={() => handleCreateNewThread(activeChannel, activeMode)}
-            className="px-2.5 py-1 bg-[#00f0ff]/10 hover:bg-[#00f0ff]/20 border border-[#00f0ff]/45 text-[#00f0ff] text-[8.5px] font-black uppercase transition-all"
-            title="Launch brand new attention thread"
-          >
-            <Plus size={9} />
-          </button>
-        </div>
-      </div>
-
-      {/* CASCADE SPECIFIC SUBMODE TABS ROW */}
-      {activeChannel === "cascade" && (
-        <div className="bg-[#0b0c0d] border-b border-[#3b494b]/20 px-4 py-2 flex items-center gap-1.5 shrink-0 overflow-x-auto select-none">
-          <span className="text-[8px] font-black text-neutral-500 uppercase tracking-widest shrink-0 mr-2">CASCADE VECTOR:</span>
-          {[
-            { id: "learn", label: "🎓 Learn / Study", color: "hover:border-[#00f0ff] text-[#00f0ff]", border: "border-[#00f0ff]/40 bg-[#00f0ff]/5 text-[#ffcb7c]" },
-            { id: "code", label: "💻 Create Code", color: "hover:border-[#c57cff] text-[#c57cff]", border: "border-[#c57cff]/40 bg-[#c57cff]/5 text-[#c57cff]" },
-            { id: "brainstorm", label: "🧠 Brainstorm", color: "hover:border-[#ff9f1c] text-[#ff9f1c]", border: "border-[#ff9f1c]/40 bg-[#ff9f1c]/5 text-[#ff9f1c]" },
-            { id: "journal", label: "📓 Experience Journal", color: "hover:border-[#1ca8ff] text-[#1ca8ff]", border: "border-[#1ca8ff]/40 bg-[#1ca8ff]/5 text-[#1ca8ff]" }
-          ].map(m => {
-            const isSel = activeMode === m.id;
-            return (
-              <button
-                key={m.id}
-                onClick={() => {
-                  setActiveMode(m.id as any);
-                  const thread = threads.find(t => t.id === activeThreadId);
-                  if (thread) {
-                    const updated = threads.map(t => t.id === activeThreadId ? { ...t, mode: m.id as any } : t);
-                    setThreads(updated);
-                    saveThreadsToStorage(updated, activeThreadId);
-                  }
-                }}
-                className={`px-3 py-1 border text-[9px] font-extrabold uppercase transition-all tracking-wider cursor-pointer ${
-                  isSel ? m.border : "border-[#3b494b]/30 bg-black/40 text-neutral-400 group hover:bg-neutral-900"
-                }`}
-              >
-                {m.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* PERSISTED ATTENTION LOGS SIDEBAR */}
-      <AnimatePresence>
-        {showHistory && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowHistory(false)}
-              className="absolute inset-0 bg-black z-40"
-            />
-            <motion.div 
-              initial={{ x: "100%", opacity: 0.8 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0.8 }}
-              transition={{ type: "tween", duration: 0.25 }}
-              className="absolute right-0 top-0 bottom-0 w-[280px] sm:w-[330px] bg-[#09090b] border-l border-[#3b494b]/40 z-50 flex flex-col text-left select-none"
-            >
-              <div className="p-4 border-b border-[#3b494b]/30 bg-[#0d0d10] flex justify-between items-center shrink-0">
-                <span className="font-extrabold text-[9.5px] uppercase tracking-widest text-[#00f0ff] flex items-center gap-1.5">
-                  <FolderOpen size={11} /> HISTORIC CHANNELS REGISTERED
-                </span>
-                <button onClick={() => setShowHistory(false)} className="text-neutral-500 hover:text-neutral-300 text-[10px] font-bold uppercase cursor-pointer">CLOSE</button>
-              </div>
-
-              <div className="flex-grow overflow-y-auto divide-y divide-neutral-900 bg-[#070708]">
-                {threads.length === 0 ? (
-                  <div className="p-8 text-center text-neutral-600">Empty.</div>
-                ) : (
-                  threads.map(t => {
-                    const isActive = t.id === activeThreadId;
-                    return (
-                      <div
-                        key={t.id}
-                        onClick={() => {
-                          setActiveThreadId(t.id);
-                          setActiveChannel(t.channel || "diagnostic");
-                          setActiveMode(t.mode || "learn");
-                          saveThreadsToStorage(threads, t.id);
-                          setShowHistory(false);
-                        }}
-                        className={`p-3.5 cursor-pointer text-left transition-all flex items-center justify-between gap-3 group ${
-                          isActive ? "bg-[#00f0ff]/5 border-r-2 border-r-[#00f0ff]" : "hover:bg-neutral-900/60"
-                        }`}
-                      >
-                        <div className="min-w-0 flex flex-col gap-1">
-                          <span className={`text-[10.5px] font-bold block truncate ${isActive ? "text-[#00f0ff]" : "text-neutral-300"}`}>
-                            {t.title}
-                          </span>
-                          <span className="text-[7.5px] text-neutral-500 uppercase tracking-wider block">
-                            {t.channel === "diagnostic" ? "🛠️ PROFILER" : `🎓 CASCADE: ${t.mode?.toUpperCase()}`} • {new Date(t.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <button
-                          onClick={(e) => handleDeleteThread(t.id, e)}
-                          className="p-1 text-neutral-700 hover:text-red-400 opacity-20 group-hover:opacity-100 transition-opacity rounded-none cursor-pointer"
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       {/* CORE SPLIT WORKSPACE: LEFT CHAT PANEL + RIGHT TRAITS KPI HUD */}
-      <div className="flex-grow flex items-stretch overflow-hidden relative">
+      <div className="flex-grow flex items-stretch overflow-hidden relative min-h-0">
         
         {/* LEADING INTERACTION CHAT BOX */}
-        <div className="flex-grow flex flex-col bg-black/10 overflow-hidden relative border-r border-[#3b494b]/15">
+        <div className="flex-grow flex flex-col bg-black/10 overflow-hidden relative min-h-0">
           
           {/* MESSAGES LIST SCROLLER */}
-          <div className="flex-grow overflow-y-auto p-4 flex flex-col gap-5 select-text">
+          <div 
+            ref={chatContainerRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              setShowScrollToTop(el.scrollTop > 100);
+            }}
+            className="flex-grow overflow-y-auto p-4 flex flex-col gap-5 select-text min-h-0"
+          >
             {activeThread?.messages.map((msg) => {
               const isAsst = msg.role === "assistant";
               return (
@@ -1142,7 +910,7 @@ export default function MaverickEngine() {
                   <div className={`w-7.5 h-7.5 flex-shrink-0 flex items-center justify-center border select-none ${
                     isAsst ? "border-[#00f0ff]/30 bg-[#00f0ff]/5 text-[#00f0ff]" : "border-neutral-700 bg-neutral-900 text-neutral-300"
                   }`}>
-                    {isAsst ? <Bot size={13} /> : <User size={13} />}
+                    {isAsst ? <MaverickLogo height={10} className="text-[#00f0ff]" /> : <User size={13} />}
                   </div>
 
                   <div className="flex flex-col gap-1">
@@ -1359,23 +1127,7 @@ export default function MaverickEngine() {
                             </div>
                           )}
 
-                          {/* Inline delta changes report */}
-                          <div className="border-t border-[#3b494b]/10 pt-2 flex flex-wrap gap-1.5 items-center text-[7px] text-neutral-500 select-none">
-                            <span className="uppercase font-bold tracking-wider">TELEMETRY DELTAS:</span>
-                            {msg.engineResult.traitUpdates && Object.entries(msg.engineResult.traitUpdates).some(([_, v]) => v !== 0) ? (
-                              Object.entries(msg.engineResult.traitUpdates).map(([k, v]) => {
-                                const delta = v as number;
-                                if (delta === 0) return null;
-                                return (
-                                  <span key={k} className={`px-1 rounded-none font-bold uppercase bg-neutral-900 border ${delta > 0 ? "border-[#00f0ff]/20 text-[#00f0ff]" : "border-red-500/20 text-red-400"}`}>
-                                    {k} {delta > 0 ? "+" : ""}{delta.toFixed(2)}
-                                  </span>
-                                );
-                              })
-                            ) : (
-                              <span>NO DELTA SHIFTED</span>
-                            )}
-                          </div>
+                          {/* Telemetry deltas display removed */}
 
                         </div>
                       )}
@@ -1406,7 +1158,22 @@ export default function MaverickEngine() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ACTIVE UTILITIES DRAWERS (Logo Maker or google Forms) */}
+          {/* Floating Scroll to Top button */}
+          {showScrollToTop && (
+            <button
+              type="button"
+              onClick={() => {
+                chatContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="absolute top-4 right-6 z-30 p-2 border border-[#00f0ff]/40 bg-[#0c0c0e]/95 text-[#00f0ff] hover:bg-[#00f0ff]/10 hover:text-white transition-all cursor-pointer flex items-center gap-1 shadow-lg select-none text-[8px] font-bold uppercase tracking-wider"
+              title="Scroll to Top"
+            >
+              <ChevronUp size={11} />
+              <span>SCROLL TO TOP</span>
+            </button>
+          )}
+
+          {/* ACTIVE UTILITIES DRAWERS */}
           {showAttachmentMenu && (
             <div className="p-3 bg-[#0d0d10] border-t border-[#3b494b]/50 border-b border-[#3b494b]/15 flex flex-col gap-2.5 text-left transition-all font-mono z-30">
               <div className="flex justify-between items-center select-none">
@@ -1416,213 +1183,24 @@ export default function MaverickEngine() {
                 <button type="button" onClick={() => setShowAttachmentMenu(false)} className="text-neutral-500 hover:text-white"><X size={12} /></button>
               </div>
 
-              {!showLogoMaker && !showFormsMaker ? (
-                <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-4 gap-1.5 text-center">
-                    
-                    <button
-                      type="button"
-                      onClick={() => handleCreateNewThread("cascade", "code")}
-                      className={`flex flex-col items-center justify-center gap-1 border bg-black/45 p-1 cursor-pointer transition-all h-[54px] ${
-                        activeMode === "code" && activeChannel === "cascade"
-                          ? "border-[#c57cff] text-[#c57cff] bg-[#c57cff]/5"
-                          : "border-neutral-800 text-neutral-400 hover:border-neutral-700"
-                      }`}
-                    >
-                      <Terminal size={11} className="text-[#c57cff]" />
-                      <span className="text-[6.5px] font-bold tracking-widest mt-1">CODE</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleCreateNewThread("cascade", "learn")}
-                      className={`flex flex-col items-center justify-center gap-1 border bg-black/45 p-1 cursor-pointer transition-all h-[54px] ${
-                        activeMode === "learn" && activeChannel === "cascade"
-                          ? "border-[#00f0ff] text-[#00f0ff] bg-[#00f0ff]/5"
-                          : "border-neutral-800 text-neutral-400 hover:border-neutral-700"
-                      }`}
-                    >
-                      <Search size={11} className="text-[#00f0ff]" />
-                      <span className="text-[6.5px] font-bold tracking-widest mt-1">RESEARCH</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowLogoMaker(true)}
-                      className="flex flex-col items-center justify-center gap-1 border border-neutral-800 hover:border-[#ff9f1c] bg-black/45 text-neutral-400 hover:text-[#ff9f1c] p-1 cursor-pointer transition-all h-[54px]"
-                    >
-                      <Sparkles size={11} className="text-[#ff9f1c]" />
-                      <span className="text-[6.5px] font-bold tracking-widest mt-1">CREATIVE BADGE</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowFormsMaker(true)}
-                      className="flex flex-col items-center justify-center gap-1 border border-neutral-800 hover:border-[#1ca8ff] bg-black/45 text-neutral-400 hover:text-[#1ca8ff] p-1 cursor-pointer transition-all h-[54px]"
-                    >
-                      <FileText size={11} className="text-[#1ca8ff]" />
-                      <span className="text-[6.5px] font-bold tracking-widest mt-1">FORMS</span>
-                    </button>
-
-                  </div>
-
-                  <div className="border-t border-[#3b494b]/15 my-0.5" />
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => imageInputRef.current?.click()}
-                      className="flex items-center justify-center gap-1.5 border border-neutral-800 hover:border-[#00f0ff] bg-neutral-900 text-neutral-400 hover:text-[#00f0ff] text-[8px] py-1.5 transition-all cursor-pointer font-bold"
-                    >
-                      <ImageIcon size={10} className="text-[#00f0ff]" />
-                      <span>UPLOAD IMAGE SCAN</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => docInputRef.current?.click()}
-                      className="flex items-center justify-center gap-1.5 border border-neutral-800 hover:border-[#ffcb7c] bg-neutral-900 text-neutral-400 hover:text-[#ffcb7c] text-[8px] py-1.5 transition-all cursor-pointer font-bold"
-                    >
-                      <FileImage size={10} className="text-[#ffcb7c]" />
-                      <span>INJECT LOG FILES</span>
-                    </button>
-                  </div>
-                </div>
-              ) : showLogoMaker ? (
-                // SVG Vector builder Form
-                <div className="flex flex-col gap-2 bg-neutral-950 p-2.5 border border-[#ff9f1c]/30">
-                  {isGeneratingLogo ? (
-                    <div className="py-4 flex flex-col items-center justify-center gap-2">
-                      <Loader2 size={16} className="text-[#ff9f1c] animate-spin" />
-                      <span className="text-[9px] text-[#ff9f1c] uppercase tracking-widest animate-pulse">{logoLogMessage}</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-[7.5px] text-neutral-500 uppercase tracking-widest font-black flex items-center gap-1 select-none">
-                        <Sparkles size={10} className="text-[#ff9f1c]" /> BRAND IDENTITY VECTOR INSIGNIA GENERATION
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[7.5px] text-neutral-500">Seed name text:</span>
-                          <input
-                            type="text"
-                            value={logoConcept}
-                            onChange={(e) => setLogoConcept(e.target.value)}
-                            placeholder="Enter insignia text..."
-                            className="bg-[#111] border border-neutral-800 focus:border-[#ff9f1c] focus:outline-none p-1.5 text-[10px] text-white"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[7.5px] text-neutral-500">Insignia design style:</span>
-                          <div className="grid grid-cols-5 gap-1">
-                            {[
-                              { id: "eye", label: "EYE" },
-                              { id: "wolf", label: "WOLF" },
-                              { id: "shield", label: "SHIELD" },
-                              { id: "node", label: "CPU" },
-                              { id: "logo", label: "OS" }
-                            ].map(item => (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => setLogoStyle(item.id)}
-                                className={`py-1 border text-[7.5px] font-bold cursor-pointer uppercase text-center transition-all ${
-                                  logoStyle === item.id ? "bg-[#ff9f1c]/10 text-[#ff9f1c] border-[#ff9f1c]" : "border-neutral-800 bg-neutral-900"
-                                }`}
-                              >
-                                {item.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[7.5px] text-neutral-500">Neon highlight tone:</span>
-                        <div className="flex gap-1.5">
-                          {[
-                            { hex: "#00f0ff", label: "CYAN" },
-                            { hex: "#ff4e4e", label: "RED" },
-                            { hex: "#ffcb7c", label: "AMBER" },
-                            { hex: "#c57cff", label: "PURPLE" },
-                            { hex: "#7cff82", label: "GREEN" }
-                          ].map(color => (
-                            <button
-                              key={color.hex}
-                              type="button"
-                              onClick={() => setLogoColor(color.hex)}
-                              className="flex items-center gap-1 py-1 border rounded-none cursor-pointer text-[7px] font-bold uppercase bg-neutral-900 flex-grow justify-center transition-all"
-                              style={{ borderColor: logoColor === color.hex ? color.hex : "rgba(38,38,38,1)", color: logoColor === color.hex ? color.hex : "rgba(115,115,115,1)" }}
-                            >
-                              <span className="w-1.5 h-1.5 shrink-0" style={{ backgroundColor: color.hex }} />
-                              <span>{color.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2.5 mt-2 border-t border-neutral-900 pt-2">
-                        <button type="button" onClick={() => setShowLogoMaker(false)} className="px-3.5 py-1.5 border border-red-500/25 text-red-500 text-[8.5px] uppercase font-bold cursor-pointer">CANCEL</button>
-                        <button type="button" onClick={handleTriggerLogoBuild} className="flex-grow py-1.5 bg-[#ff9f1c] text-black text-[8.5px] font-black uppercase tracking-wider cursor-pointer text-center">COMPILED DIGITAL INSIGNIA</button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                // Google Forms compiler Form
-                <div className="flex flex-col gap-2 bg-neutral-950 p-3 border border-[#1ca8ff]/30 text-left">
-                  {isDeployingForm ? (
-                    <div className="py-5 flex flex-col items-center justify-center gap-2">
-                      <Loader2 size={16} className="text-[#1ca8ff] animate-spin" />
-                      <span className="text-[9px] text-[#1ca8ff] uppercase tracking-widest animate-pulse">ESTABLISHING GOOGLE API TRANSACTION PIPELINE...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-[8px] text-neutral-500 uppercase tracking-widest font-black select-none flex items-center gap-1">
-                        <FileText size={10} className="text-[#1ca8ff]" /> AUTONOMOUS WORKSPACE SURVEY CREATOR
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[7.5px] text-neutral-500 uppercase">Survey header Title:</span>
-                          <input
-                            type="text"
-                            value={formTitle}
-                            onChange={(e) => setFormTitle(e.target.value)}
-                            placeholder="Mental Friction Audit"
-                            className="bg-[#111] border border-neutral-800 focus:border-[#1ca8ff] focus:outline-none p-1.5 text-[10px] text-white"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[7.5px] text-neutral-500 uppercase">First Text Question:</span>
-                          <input
-                            type="text"
-                            value={formBlockerQuestion}
-                            onChange={(e) => setFormBlockerQuestion(e.target.value)}
-                            className="bg-[#111] border border-neutral-800 focus:border-[#1ca8ff] focus:outline-none p-1.5 text-[10px] text-white"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[7.5px] text-neutral-500 uppercase">Second Text Question:</span>
-                          <input
-                            type="text"
-                            value={formQuizQuestion}
-                            onChange={(e) => setFormQuizQuestion(e.target.value)}
-                            className="bg-[#111] border border-neutral-800 focus:border-[#1ca8ff] focus:outline-none p-1.5 text-[10px] text-white"
-                          />
-                        </div>
-                      </div>
-
-                      {deployError && <div className="p-2 border border-red-500/20 bg-red-950/10 text-red-400 text-[8px] uppercase tracking-wide leading-normal font-sans">{deployError}</div>}
-
-                      <div className="flex gap-2 mt-2 pt-2 border-t border-neutral-900">
-                        <button type="button" onClick={() => setShowFormsMaker(false)} className="px-3 py-1.5 border border-red-500/25 text-red-500 text-[8.5px] uppercase font-bold cursor-pointer">BACK</button>
-                        <button type="button" onClick={handleDeployGoogleForm} className="flex-grow py-1.5 bg-[#1ca8ff] text-black text-[8.5px] font-black uppercase tracking-wider cursor-pointer select-none">DEPLOY TO MY WORKSPACE</button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="flex items-center justify-center gap-1.5 border border-neutral-800 hover:border-[#00f0ff] bg-neutral-900 text-neutral-400 hover:text-[#00f0ff] text-[8px] py-1.5 transition-all cursor-pointer font-bold"
+                >
+                  <ImageIcon size={10} className="text-[#00f0ff]" />
+                  <span>UPLOAD IMAGE SCAN</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => docInputRef.current?.click()}
+                  className="flex items-center justify-center gap-1.5 border border-neutral-800 hover:border-[#ffcb7c] bg-neutral-900 text-neutral-400 hover:text-[#ffcb7c] text-[8px] py-1.5 transition-all cursor-pointer font-bold"
+                >
+                  <FileImage size={10} className="text-[#ffcb7c]" />
+                  <span>INJECT LOG FILES</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -1657,10 +1235,7 @@ export default function MaverickEngine() {
           <div className="p-3 bg-[#0c0c0e] border-t border-[#3b494b]/30 relative z-20 shrink-0 flex flex-col gap-1.5 select-none text-left">
             <div className="absolute top-0 left-0 w-[2.5px] h-full bg-[#00f0ff] signal-glow" />
             
-            <div className="flex justify-between items-center text-[8.5px] text-[#b9cacb]/45 uppercase font-black px-0.5">
-              <span className="flex items-center gap-1.5"><Cpu size={10} className="text-[#00f0ff]" /> MAVERICK INTERACTION VECTOR STREAM</span>
-              <span>CURRENT LEVEL: {activeChannel === "diagnostic" ? "🛠️ PROFILER ONBOARDING" : `🎓 CASCADE: ${activeMode.toUpperCase()}`}</span>
-            </div>
+            {/* VECTOR STREAM HEADER BAND REMOVED FOR CLEANER LAYOUT */}
 
             <form onSubmit={handleSendChatMessage} className="flex gap-2.5">
               <input
@@ -1688,13 +1263,11 @@ export default function MaverickEngine() {
                 type="button"
                 onClick={() => {
                   setShowAttachmentMenu(!showAttachmentMenu);
-                  setShowLogoMaker(false);
-                  setShowFormsMaker(false);
                 }}
                 className={`border px-2.5 rounded-none transition-all flex items-center justify-center cursor-pointer bg-neutral-900 border-neutral-800 ${
                   showAttachmentMenu ? "border-[#00f0ff] text-[#00f0ff]" : "text-neutral-500 hover:text-white hover:border-neutral-700"
                 }`}
-                title="Google forms surveys, SVG logo insignia generator, attachments"
+                title="Log entry files, image scan, attachments"
               >
                 <Plus size={14} className={showAttachmentMenu ? "rotate-45 transition-transform duration-300" : "transition-transform duration-300"} />
               </button>
@@ -1704,15 +1277,7 @@ export default function MaverickEngine() {
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 disabled={isProcessing}
-                placeholder={
-                  activeChannel === "diagnostic"
-                    ? "Explain messy workload bottlenecks, procrastination, or state vectors..."
-                    : activeMode === "code"
-                    ? "Input programming tasks, compile errors, or styling algorithms..."
-                    : activeMode === "learn"
-                    ? "Input conceptual study questions, academic equations, or theories..."
-                    : "Structure roadmap blueprints, strategic sequences, or review experience logs..."
-                }
+                placeholder="Initiate prompt stream, upload logs, describe bottlenecks, or input code/analytical tasks..."
                 className="flex-grow bg-[#111112] border border-[#3b494b]/30 focus:border-[#00f0ff] focus:outline-none text-white font-mono text-xs px-3 py-3 rounded-none placeholder:text-neutral-700 select-text"
               />
 
@@ -1725,49 +1290,11 @@ export default function MaverickEngine() {
                 <Send size={11} />
               </button>
             </form>
+            {/* TELEMETRY BAR SIDEBAR REMOVED TO ADHERE TO LAYOUT INSTRUCTIONS */}
           </div>
 
-        </div>
-
-        {/* TRAITS ANALYSIS BAR SIDEBAR OR PANEL HUD */}
-        <div className={`hidden lg:flex w-72 shrink-0 bg-[#0c0c0e]/80 border-r border-[#3b494b]/10 p-4 select-none text-left flex-col justify-between`}>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-1.5 text-[9px] font-black tracking-widest text-[#00f0ff] uppercase select-none pb-2 border-b border-[#3b494b]/20">
-              <Sliders size={12} /> Trait Telemetry Profile
-            </div>
-
-            <div className="flex flex-col gap-3.5 mt-2">
-              {[
-                { key: "action", label: "🎯 Execution Action", value: traits.action, desc: "Frictionless task startup startup speed" },
-                { key: "persistence", label: "🔋 Continuity Persistence", value: traits.persistence, desc: "Resilience over cognitive exhaustion loops" },
-                { key: "discipline", label: "🔒 Focus Discipline", value: traits.discipline, desc: "Suppression of phone/reddit notifications" },
-                { key: "awareness", label: "👁️ State Awareness", value: traits.awareness, desc: "Isolate precise workflow blocker leakages" },
-                { key: "courage", label: "⚡ Career Courage", value: traits.courage, desc: "Engaging strategic challenges with conviction" },
-                { key: "learning", label: "📚 Concept Learning", value: traits.learning, desc: "Simplifying academic & programming principles" }
-              ].map((tr) => (
-                <div key={tr.key} className="flex flex-col gap-1 transition-all duration-300">
-                  <div className="flex justify-between items-center text-[9px]">
-                    <span className="font-extrabold text-[#b9cacb]/80 uppercase tracking-wide">{tr.label}</span>
-                    <span className="font-mono font-bold text-white">{(tr.value * 100).toFixed(0)}%</span>
-                  </div>
-                  <div className="w-full h-1 bg-neutral-900 border border-neutral-800 flex rounded-none relative">
-                    <div 
-                      className={`h-full transition-all duration-500 relative`} 
-                      style={{ 
-                        width: `${tr.value * 100}%`,
-                        backgroundColor: tr.value >= 0.75 ? "#00f0ff" : tr.value >= 0.50 ? "#c57cff" : "#ef4444"
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="p-3 bg-neutral-950/80 border border-neutral-900 font-sans text-[10px] text-neutral-500 leading-normal gap-1.5 flex flex-col">
-            <span className="font-mono text-[8px] font-black text-[#c57cff] uppercase tracking-wider block">Telemetry HUD info:</span>
-            <p className="italic">Traits update dynamically during Diagnostic profiling evaluations or when completing focus block checklists in cascade channels.</p>
-          </div>
+          {/* Floating Focus Timer Widget */}
+          <FocusTimerPlugin />
         </div>
 
       </div>

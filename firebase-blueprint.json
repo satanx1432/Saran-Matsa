@@ -106,6 +106,43 @@
         }
       },
       "required": ["id", "userId", "mode", "title", "messagesJson", "timestamp"]
+    },
+    "Evaluation": {
+      "title": "Evaluation",
+      "description": "User diagnostic onboarding cognitive assessment appraisal report.",
+      "type": "object",
+      "properties": {
+        "deviceUid": {
+          "type": "string",
+          "description": "Unique local device UUID."
+        },
+        "email": {
+          "type": "string",
+          "description": "Cognitive assessment account credential email."
+        },
+        "uid": {
+          "type": "string",
+          "description": "Optional user UID from authentication details."
+        },
+        "overallScore": {
+          "type": "number",
+          "description": "Determined overall focus rating points."
+        },
+        "summary": {
+          "type": "string",
+          "description": "High-level diagnostic summary."
+        },
+        "appraisalReport": {
+          "type": "string",
+          "description": "Formatted report data block."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Assessment dispatch ISO timestamp."
+        }
+      },
+      "required": ["deviceUid", "email", "overallScore", "summary", "appraisalReport", "timestamp"]
     }
   },
   "firestore": {
@@ -120,6 +157,10 @@
     "/chat_histories/{historyId}": {
       "schema": "SavedChatHistory",
       "description": "Persistent saved mode-specific communication logs index metadata."
+    },
+    "/evaluations/{evaluationId}": {
+      "schema": "Evaluation",
+      "description": "Stores user diagnostic onboarding cognitive assessment appraisal reports."
     }
   }
 }

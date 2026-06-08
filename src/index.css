@@ -90,14 +90,15 @@ body {
 
 /* Custom Webkit Scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: #131313;
 }
 ::-webkit-scrollbar-thumb {
   background: #3b494b;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #00f0ff;

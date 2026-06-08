@@ -74,6 +74,22 @@ service cloud.firestore {
         && data.timestamp == request.time;
     }
 
+    // Evaluation validation rules
+    function isValidEvaluation(data) {
+      return data.keys().hasAll(['deviceUid', 'email', 'overallScore', 'summary', 'appraisalReport', 'timestamp'])
+        && data.keys().size() <= 15
+        && data.deviceUid is string
+        && data.deviceUid.size() <= 128
+        && data.email is string
+        && data.email.size() <= 256
+        && data.overallScore is number
+        && data.summary is string
+        && data.summary.size() <= 10000
+        && data.appraisalReport is string
+        && data.appraisalReport.size() <= 128000
+        && data.timestamp is string;
+    }
+
     // User Profile matching block
     match /users/{userId} {
       allow read: if isSignedIn() && userId == request.auth.uid;
@@ -96,6 +112,13 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidId(historyId) && isValidSavedChatHistory(incoming());
       allow update: if isSignedIn() && isValidId(historyId) && existing().userId == request.auth.uid && isValidSavedChatHistory(incoming()) && incoming().userId == existing().userId;
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // Evaluations matching block
+    match /evaluations/{evaluationId} {
+      allow read: if isValidId(evaluationId);
+      allow create, update: if isValidId(evaluationId) && isValidEvaluation(incoming());
+      allow delete: if isSignedIn() && evaluationId == request.auth.uid;
     }
   }
 }

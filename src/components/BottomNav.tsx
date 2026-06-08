@@ -1,4 +1,5 @@
-import { Radar, Database, Layers, Globe, User, Cpu } from "lucide-react";
+import { User, Cpu, BookOpen, Compass } from "lucide-react";
+import MaverickLogo from "./MaverickLogo";
 
 interface BottomNavProps {
   activeTab: string;
@@ -8,8 +9,9 @@ interface BottomNavProps {
 
 export default function BottomNav({ activeTab, onTabChange, activeMissionCount }: BottomNavProps) {
   const tabs = [
-    { id: "radar", label: "TODAY", icon: Radar },
+    { id: "frontier", label: "FRONTIER", icon: Compass },
     { id: "hasex", label: "MAVERICK", icon: Cpu },
+    { id: "journal", label: "CHRONICLE", icon: BookOpen },
     { id: "profile", label: "PROFILE", icon: User }
   ];
 
@@ -26,15 +28,26 @@ export default function BottomNav({ activeTab, onTabChange, activeMissionCount }
               className={`flex flex-col items-center justify-center p-2 relative transition-all duration-300 active:scale-95 cursor-pointer rounded-none group w-20`}
               id={`nav-${tab.id}`}
             >
-              <div className="relative">
-                <Icon 
-                  size={20}
-                  className={`mb-1 transition-all duration-300 ${
-                    isActive 
-                      ? "text-[#00dbe9] filter drop-shadow-[0_0_8px_rgba(0,219,233,0.5)]" 
-                      : "text-[#b9cacb]/50 group-hover:text-[#00dbe9]/80"
-                  }`} 
-                />
+              <div className="relative flex items-center justify-center min-h-[24px]">
+                {tab.id === "hasex" ? (
+                  <MaverickLogo
+                    height={20}
+                    className={`mb-1 transition-all duration-300 ${
+                      isActive 
+                        ? "text-[#00f0ff] filter drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" 
+                        : "text-[#b9cacb]/50 group-hover:text-[#00f0ff]/80"
+                    }`}
+                  />
+                ) : (
+                  <Icon 
+                    size={20}
+                    className={`mb-1 transition-all duration-300 ${
+                      isActive 
+                        ? "text-[#00dbe9] filter drop-shadow-[0_0_8px_rgba(0,219,233,0.5)]" 
+                        : "text-[#b9cacb]/50 group-hover:text-[#00dbe9]/80"
+                    }`} 
+                  />
+                )}
               </div>
               <span 
                 className={`font-mono text-[10px] tracking-wider transition-all duration-300 ${

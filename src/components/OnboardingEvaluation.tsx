@@ -440,7 +440,7 @@ Next Actions:
     };
 
     // Save in LocalStorage
-    localStorage.setItem("maverick_evaluation", JSON.stringify(appraisalData));
+    localStorage.setItem("hasex_evaluation", JSON.stringify(appraisalData));
 
     // Save of evaluations collection
     const docId = auth.currentUser?.uid || deviceUid;
@@ -760,7 +760,7 @@ Next Actions:
                   "Pick what actually happens — not what you'd prefer to happen."
                 </p>
                 <p>
-                  This 10-question evaluation parses key performance traits: <strong className="text-white">Action Bias</strong>, <strong className="text-white">Persistence</strong>, <strong className="text-white">Commitment Discipline</strong>, <strong className="text-white">Mindful Awareness</strong>, <strong className="text-white">Strategic Courage</strong>, and <strong className="text-white">Adaptation Speed</strong>.
+                  This 5-question evaluation parses key performance traits: <strong className="text-white">Action Bias</strong>, <strong className="text-white">Persistence</strong>, <strong className="text-white">Commitment Discipline</strong>, <strong className="text-white">Mindful Awareness</strong>, <strong className="text-white">Strategic Courage</strong>, and <strong className="text-white">Adaptation Speed</strong>.
                 </p>
               </div>
 
@@ -802,7 +802,7 @@ Next Actions:
               <div className="flex justify-between items-center border-b border-[#3b494b]/20 pb-4 select-none font-mono text-[9px]">
                 <div className="flex items-center gap-2 text-[#00f0ff] font-bold">
                   <Zap size={10} className="animate-pulse" />
-                  <span className="tracking-widest">DIAGNOSTIC PIPELINE // QUEST_{QUESTIONS_LIST[currentQuestionIndex].id} of 10</span>
+                  <span className="tracking-widest">DIAGNOSTIC PIPELINE // QUEST_{QUESTIONS_LIST[currentQuestionIndex].id} of {QUESTIONS_LIST.length}</span>
                 </div>
                 <div className="text-[#b9cacb]/55 font-bold tracking-wider">
                   TRAIT: <span className="text-white uppercase font-black">{QUESTIONS_LIST[currentQuestionIndex].category}</span>
